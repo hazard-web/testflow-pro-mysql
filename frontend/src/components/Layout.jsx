@@ -121,7 +121,10 @@ export default function Layout() {
       ],
     },
     { section: 'Analytics', items: [{ to: '/reports', label: 'Reports' }] },
-    { section: 'Admin', items: user?.role === 'admin' ? [{ to: '/logs', label: 'Access Logs' }] : [] },
+    {
+      section: 'Admin',
+      items: user?.role === 'admin' ? [{ to: '/logs', label: 'Access Logs' }] : [],
+    },
     { section: 'Settings', items: [{ to: '/settings', label: 'Settings' }] },
   ];
 

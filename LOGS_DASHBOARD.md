@@ -7,12 +7,14 @@ The Access Logs Dashboard is a comprehensive monitoring system that tracks all u
 ## Features
 
 ### 1. **Real-time Activity Tracking**
+
 - Automatically logs all user actions (login, logout, resource access)
 - Captures IP address, user agent, and timestamp for every action
 - Records success/failure status for security events
 - Tracks user details (name, email, role) with each activity
 
 ### 2. **Advanced Filtering**
+
 - Filter by action type (login, password reset, 2FA, etc.)
 - Filter by status (success/failure)
 - Search by user name, email, or IP address
@@ -20,12 +22,14 @@ The Access Logs Dashboard is a comprehensive monitoring system that tracks all u
 - Combine multiple filters for precise queries
 
 ### 3. **Summary Dashboard**
+
 - Total logs count across all time
 - Total registered users in system
 - Total admin users for quick overview
 - Real-time statistics cards
 
 ### 4. **Comprehensive Data Display**
+
 - Timestamp (with full date-time)
 - User information (name with avatar)
 - User email and role badges
@@ -35,6 +39,7 @@ The Access Logs Dashboard is a comprehensive monitoring system that tracks all u
 - Pagination for large datasets
 
 ### 5. **Responsive Design**
+
 - Works seamlessly on desktop, tablet, and mobile
 - Touch-friendly interface with proper spacing
 - Optimized table layout for small screens
@@ -45,6 +50,7 @@ The Access Logs Dashboard is a comprehensive monitoring system that tracks all u
 ### Backend Changes
 
 #### 1. **Enhanced Audit Logs Endpoint** (`/api/audit-logs`)
+
 ```javascript
 GET /api/audit-logs
 Query Parameters:
@@ -90,7 +96,9 @@ Response:
 ```
 
 #### 2. **Activity Logger Middleware** (`/backend/src/middleware/logger.js`)
+
 Automatically logs all API requests:
+
 - Captures request method and path
 - Determines action type intelligently
 - Extracts entity type (test_case, bug, tester, etc.)
@@ -98,6 +106,7 @@ Automatically logs all API requests:
 - Logs success/failure status based on response
 
 **Auto-logged Actions:**
+
 - `login` - User login attempts
 - `logout` - User logout
 - `password_reset` - Password reset requests
@@ -111,6 +120,7 @@ Automatically logs all API requests:
 ### Frontend Implementation
 
 #### 1. **LogsDashboard Component** (`/frontend/src/pages/Logs.jsx`)
+
 - Admin-only page (non-admins see access denied message)
 - Fetches logs from `/api/audit-logs`
 - Implements client-side filtering and pagination
@@ -118,12 +128,14 @@ Automatically logs all API requests:
 - Loading and error states with user-friendly messages
 
 #### 2. **API Integration** (`/frontend/src/utils/api.js`)
+
 - Uses existing axios interceptor for requests
 - Automatic token refresh on 401 errors
 - Query string building for filter parameters
 - Error handling with user-friendly messages
 
 #### 3. **Styling** (`/frontend/src/styles/logs.css`)
+
 - Professional dark theme matching TestFlow design
 - 700+ lines of custom CSS
 - Responsive breakpoints: 900px, 680px
@@ -133,6 +145,7 @@ Automatically logs all API requests:
 ### Database Schema
 
 **audit_logs Table:**
+
 ```sql
 CREATE TABLE audit_logs (
   id VARCHAR(36) PRIMARY KEY,
@@ -154,17 +167,20 @@ CREATE TABLE audit_logs (
 ## How to Use
 
 ### 1. **Access the Logs Dashboard**
+
 - Only admins can view the dashboard
 - Navigate to sidebar → Admin section → Access Logs
 - Or go directly to `/logs` route
 - URL: `http://localhost:3000/logs`
 
 ### 2. **View All Logs**
+
 - Default view shows last 50 logs in descending timestamp order
 - Summary cards show total logs, users, and admins
 - Scroll through table to view activity details
 
 ### 3. **Apply Filters**
+
 ```
 Step 1: Choose filter criteria
   - Search box: Type user name, email, IP, or action
@@ -181,6 +197,7 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ```
 
 ### 4. **Pagination**
+
 - Shows current page and total pages
 - "Previous" button disabled on first page
 - "Next" button disabled on last page
@@ -188,6 +205,7 @@ Step 3: (Optional) Click "Clear" to reset all filters
 - Each page shows up to 50 logs (configurable)
 
 ### 5. **View Details**
+
 - Hover over IP address to see full user agent
 - Click "View" button to see entity details (feature-ready)
 - Role badges show user's system role
@@ -196,16 +214,19 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ## Color Coding
 
 ### Status Badges
+
 - **✓ Success** - Green badge - Request completed successfully
 - **✗ Failure** - Red badge - Request failed or error occurred
 
 ### Role Badges
+
 - **admin** - Red badge - Administrator
 - **qa_engineer** - Blue badge - QA Engineer
 - **tester** - Green badge - Tester
 - **developer** - Purple badge - Developer
 
 ### Action Types
+
 - All action types displayed in cyan color
 - Text is auto-capitalized and formatted
 - Monospace font for consistency
@@ -213,6 +234,7 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ## Deployment Considerations
 
 ### Local Development
+
 ```bash
 # Logs are stored in MySQL (automatically migrated)
 # Middleware is active in dev mode
@@ -221,6 +243,7 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ```
 
 ### Production Deployment
+
 ```bash
 # Ensure rate limiting is enabled (not skipped)
 # Logs persist in RDS/managed MySQL
@@ -230,6 +253,7 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ```
 
 ### Performance Tips
+
 1. **Archival Strategy**: Archive logs older than 90 days
 2. **Index Optimization**: Queries use indexed columns (user_id, action, created_at)
 3. **Pagination**: Always use pagination (limit defaults to 50)
@@ -239,16 +263,19 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ## Security Features
 
 ### 1. **Role-Based Access Control**
+
 - Only admins can view all logs
 - Users see only their own activity (via `/my-activity` endpoint)
 - Non-admins get 403 error with clear message
 
 ### 2. **Data Protection**
+
 - Passwords and tokens are never logged
 - Sensitive data (2FA secrets) not stored in logs
 - IP addresses logged for fraud detection
 
 ### 3. **Audit Trail**
+
 - Immutable log records (not editable after creation)
 - Timestamp proves when actions occurred
 - User info captured at time of action (even if user deleted later)
@@ -256,6 +283,7 @@ Step 3: (Optional) Click "Clear" to reset all filters
 ## API Endpoints Reference
 
 ### View All Logs (Admin Only)
+
 ```
 GET /api/audit-logs
 Authorization: Bearer <token>
@@ -263,6 +291,7 @@ Query: ?limit=50&offset=0&action=login&status=success&search=john&startDate=2026
 ```
 
 ### View Your Activity
+
 ```
 GET /api/audit-logs/my-activity
 Authorization: Bearer <token>
@@ -270,6 +299,7 @@ Query: ?limit=50&offset=0
 ```
 
 ### View Failed Logins (Last 24h)
+
 ```
 GET /api/audit-logs/failed-logins
 Authorization: Bearer <token>
@@ -279,23 +309,27 @@ Query: ?limit=50&offset=0
 ## Troubleshooting
 
 ### Logs Not Showing
+
 - Verify user is admin: Check user role in database
 - Check if middleware is loaded: Verify `app.use('/api/', logActivity)` in server.js
 - Ensure database migrations ran: `npm run db:migrate`
 
 ### Filters Not Working
+
 - Check browser console for API errors
 - Verify date format is correct (YYYY-MM-DD)
 - Clear filters and try with single filter first
 - Check network tab for request/response
 
 ### Performance Issues
+
 - Reduce pagination limit if page is slow
 - Narrow down date range in filters
 - Consider archiving old logs
 - Check database indexes are created
 
 ### Missing User Details
+
 - User may have been deleted but log remains (shows null)
 - Archived logs may lack user data
 - Check users table for matching user_id
@@ -316,11 +350,13 @@ Query: ?limit=50&offset=0
 ## Files Modified/Created
 
 ### New Files
+
 - `/frontend/src/pages/Logs.jsx` - LogsDashboard component (340 lines)
 - `/frontend/src/styles/logs.css` - Dashboard styling (700+ lines)
 - `/backend/src/middleware/logger.js` - Activity logging middleware (70 lines)
 
 ### Modified Files
+
 - `/backend/src/routes/audit.routes.js` - Enhanced query with user joins
 - `/backend/src/server.js` - Added logActivity middleware
 - `/frontend/src/App.jsx` - Added /logs route
@@ -328,6 +364,7 @@ Query: ?limit=50&offset=0
 - `/frontend/src/components/Layout.jsx` - Added logs link to sidebar
 
 ### Database
+
 - `audit_logs` table - Already exists from security migrations
 - User joins automatically capture user details
 - IP and user_agent columns store access information
@@ -335,16 +372,19 @@ Query: ?limit=50&offset=0
 ## Support & Maintenance
 
 ### Weekly Tasks
+
 - Check for failed login spikes
 - Review admin activities
 - Identify suspicious patterns
 
 ### Monthly Tasks
+
 - Analyze access trends
 - Review role-based permissions
 - Archive old logs
 
 ### Quarterly Tasks
+
 - Audit access patterns
 - Review security policies
 - Update rate limiting rules

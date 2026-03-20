@@ -25,7 +25,8 @@ const logActivity = async (req, res, next) => {
           if (path.includes('/login')) action = 'login';
           else if (path.includes('/logout')) action = 'logout';
           else if (path.includes('/password-reset')) action = 'password_reset';
-          else if (path.includes('/two-fa')) action = path.includes('enable') ? 'two_fa_enabled' : 'two_fa_disabled';
+          else if (path.includes('/two-fa'))
+            action = path.includes('enable') ? 'two_fa_enabled' : 'two_fa_disabled';
           else if (path.includes('/test-cases')) {
             entityType = 'test_case';
             if (method === 'POST') action = 'created_resource';
@@ -64,7 +65,8 @@ const logActivity = async (req, res, next) => {
           }
 
           // Get IP address
-          const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || 'unknown';
+          const ipAddress =
+            req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || 'unknown';
 
           // Log to database
           await db('audit_logs').insert({

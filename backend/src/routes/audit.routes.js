@@ -38,7 +38,16 @@ router.get('/', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Only admins can view all audit logs' });
     }
 
-    const { action, userId, status, search, limit = 50, offset = 0, startDate, endDate } = req.query;
+    const {
+      action,
+      userId,
+      status,
+      search,
+      limit = 50,
+      offset = 0,
+      startDate,
+      endDate,
+    } = req.query;
     let query = db('audit_logs')
       .select(
         'audit_logs.*',
@@ -59,15 +68,36 @@ router.get('/', authenticate, async (req, res) => {
     }
 
     if (search) {
-      query = query.where(q => 
-        q.where('users.name', 'like', `%${search}%`)
+      query = query.where(q =>
+        q
+          .where('users.name', 'like', `%${search}%`)
           .orWhere('users.email', 'like', `%${search}%`)
           .orWhere('audit_logs.action', 'like', `%${search}%`)
           .orWhere('audit_logs.ip_address', 'like', `%${search}%`)
       );
     }
 
-    const countResult = await query.clone().count('* as count').first();
+    const countResult = await db('audit_logs')
+      .leftJoin('users', 'audit_logs.user_id', 'users.id')
+      .where(function () {
+        if (action) this.where('audit_logs.action', action);
+        if (userId) this.where('audit_logs.user_id', userId);
+        if (status) this.where('audit_logs.status', status);
+        if (startDate && endDate) {
+          this.whereBetween('audit_logs.created_at', [new Date(startDate), new Date(endDate)]);
+        }
+        if (search) {
+          this.where(q =>
+            q
+              .where('users.name', 'like', `%${search}%`)
+              .orWhere('users.email', 'like', `%${search}%`)
+              .orWhere('audit_logs.action', 'like', `%${search}%`)
+              .orWhere('audit_logs.ip_address', 'like', `%${search}%`)
+          );
+        }
+      })
+      .count('audit_logs.id as count')
+      .first();
     const total = countResult.count;
 
     const logs = await query
@@ -80,9 +110,9 @@ router.get('/', authenticate, async (req, res) => {
       pagination: { total, limit: parseInt(limit), offset: parseInt(offset) },
       summary: {
         total_logs: total,
-        total_admins: await db('users').where({ role: 'admin' }).count('* as count').first(),
-        total_users: await db('users').count('* as count').first(),
-      }
+        total_admins: await db('users').where({ role: 'admin' }).count('id as count').first(),
+        total_users: await db('users').count('id as count').first(),
+      },
     });
   } catch (error) {
     logger.error('Error fetching all audit logs:', error);

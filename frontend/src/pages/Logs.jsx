@@ -57,7 +57,7 @@ const LogsDashboard = () => {
         ...(filters.endDate && { endDate: filters.endDate }),
       });
 
-      const response = await api.get(`/api/audit-logs?${query}`);
+      const response = await api.get(`/audit-logs?${query}`);
       setLogs(response.data.data);
       setSummary(response.data.summary || {});
       setPagination(prev => ({
@@ -99,7 +99,7 @@ const LogsDashboard = () => {
     fetchLogs(1);
   };
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= Math.ceil(pagination.total / pagination.limit)) {
       fetchLogs(newPage);
     }
@@ -126,7 +126,7 @@ const LogsDashboard = () => {
           <h1>📊 Access Logs Dashboard</h1>
           <p>Monitor all user activities, access attempts, and security events</p>
         </div>
-        
+
         {/* Summary Cards */}
         <div className="logs-summary">
           <div className="summary-card">
@@ -259,16 +259,14 @@ const LogsDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
+                {logs.map(log => (
                   <tr key={log.id} className={`log-row status-${log.status}`}>
                     <td className="timestamp">
-                      <span className="time">
-                        {new Date(log.created_at).toLocaleString()}
-                      </span>
+                      <span className="time">{new Date(log.created_at).toLocaleString()}</span>
                     </td>
                     <td className="user-name">
                       <div className="user-badge">
-                        <span 
+                        <span
                           className="avatar"
                           style={{ backgroundColor: `var(--${log.avatar_color})` }}
                         >
@@ -277,18 +275,14 @@ const LogsDashboard = () => {
                         <span>{log.user_name || 'Unknown'}</span>
                       </div>
                     </td>
-                    <td className="user-email">
-                      {log.user_email || '-'}
-                    </td>
+                    <td className="user-email">{log.user_email || '-'}</td>
                     <td className="user-role">
                       <span className={`role-badge role-${log.user_role}`}>
                         {log.user_role || 'N/A'}
                       </span>
                     </td>
                     <td className="action">
-                      <span className="action-badge">
-                        {log.action}
-                      </span>
+                      <span className="action-badge">{log.action}</span>
                     </td>
                     <td className="ip-address" title={log.user_agent || 'No user agent'}>
                       {log.ip_address || 'N/A'}
@@ -299,7 +293,7 @@ const LogsDashboard = () => {
                       </span>
                     </td>
                     <td className="details">
-                      <button 
+                      <button
                         className="btn-view-details"
                         title={`Entity: ${log.entity_type} | ID: ${log.entity_id}`}
                       >
@@ -341,8 +335,8 @@ const LogsDashboard = () => {
           <div className="empty-state">
             <h2>📭 No Logs Found</h2>
             <p>
-              {Object.values(filters).some(f => f) 
-                ? 'Try adjusting your filters to find logs.' 
+              {Object.values(filters).some(f => f)
+                ? 'Try adjusting your filters to find logs.'
                 : 'No access logs recorded yet.'}
             </p>
           </div>

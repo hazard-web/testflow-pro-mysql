@@ -6,42 +6,44 @@ A **comprehensive access logs dashboard** that monitors all user activities on y
 
 ### Key Capabilities
 
-| Feature | Details |
-|---------|---------|
+| Feature               | Details                                                                    |
+| --------------------- | -------------------------------------------------------------------------- |
 | **Real-time Logging** | Every API request is automatically logged with user, IP, timestamp, status |
-| **Admin Dashboard** | Dedicated /logs page showing all access and activities (admin-only) |
-| **Advanced Filters** | Search by name/email/IP, filter by action/status, date ranges |
-| **Summary Stats** | See total logs, total users, total admins at a glance |
-| **Responsive UI** | Works perfectly on desktop, tablet, and mobile devices |
-| **Security** | JWT auth, role-based access, immutable audit trail, no sensitive data |
-| **Performance** | Indexed queries, pagination, <200ms response times |
+| **Admin Dashboard**   | Dedicated /logs page showing all access and activities (admin-only)        |
+| **Advanced Filters**  | Search by name/email/IP, filter by action/status, date ranges              |
+| **Summary Stats**     | See total logs, total users, total admins at a glance                      |
+| **Responsive UI**     | Works perfectly on desktop, tablet, and mobile devices                     |
+| **Security**          | JWT auth, role-based access, immutable audit trail, no sensitive data      |
+| **Performance**       | Indexed queries, pagination, <200ms response times                         |
 
 ---
 
 ## 📁 Files Created
 
 ### Frontend (React)
+
 ```
 ✨ NEW FILES:
   └─ frontend/src/pages/Logs.jsx (340 lines)
      LogsDashboard component with filtering, pagination, data fetching
-  
+
   └─ frontend/src/styles/logs.css (700+ lines)
      Professional dark theme styling, responsive layouts, animations
 
 📝 MODIFIED FILES:
   └─ frontend/src/App.jsx
      Added route: <Route path="logs" element={<Logs />} />
-  
+
   └─ frontend/src/pages/index.jsx
      Added export: export { default as Logs } from './Logs'
-  
+
   └─ frontend/src/components/Layout.jsx
      Added sidebar link for /logs (admin-only)
      Added logs icon to NavIcon component
 ```
 
 ### Backend (Node.js)
+
 ```
 ✨ NEW FILES:
   └─ backend/src/middleware/logger.js (70 lines)
@@ -51,21 +53,22 @@ A **comprehensive access logs dashboard** that monitors all user activities on y
   └─ backend/src/server.js
      Added: const { logActivity } = require('./middleware/logger')
      Added: app.use('/api/', logActivity) to middleware stack
-  
+
   └─ backend/src/routes/audit.routes.js
      Enhanced: GET /api/audit-logs endpoint
      Added: User joins, advanced filtering, search, date range support
 ```
 
 ### Documentation
+
 ```
 ✨ NEW FILES:
   └─ LOGS_DASHBOARD.md (400+ lines)
      Complete usage guide, API documentation, deployment guide
-  
+
   └─ LOGS_ARCHITECTURE.md (300+ lines)
      System architecture, data flow diagrams, component hierarchy
-  
+
   └─ SETUP_LOGS_DASHBOARD.sh
      Quick reference setup and feature summary
 ```
@@ -77,6 +80,7 @@ A **comprehensive access logs dashboard** that monitors all user activities on y
 ### Access the Dashboard
 
 **Local Development:**
+
 ```
 1. Start the app: npm run dev
 2. Go to: http://localhost:3000/logs
@@ -85,6 +89,7 @@ A **comprehensive access logs dashboard** that monitors all user activities on y
 ```
 
 **Production:**
+
 ```
 1. Deploy with npm run build
 2. Ensure database is migrated
@@ -94,20 +99,20 @@ A **comprehensive access logs dashboard** that monitors all user activities on y
 
 ### Dashboard Features
 
-| Section | What You See |
-|---------|-------------|
-| **Summary Cards** | Total logs count, total users, admin count |
-| **Filter Bar** | Search box, action dropdown, status dropdown, date pickers |
-| **Log Table** | Timestamp, user name, email, role, action, IP, status, details |
-| **Pagination** | Navigate pages, shows current page and total logs |
-| **Controls** | Apply Filters, Clear, Previous, Next buttons |
+| Section           | What You See                                                   |
+| ----------------- | -------------------------------------------------------------- |
+| **Summary Cards** | Total logs count, total users, admin count                     |
+| **Filter Bar**    | Search box, action dropdown, status dropdown, date pickers     |
+| **Log Table**     | Timestamp, user name, email, role, action, IP, status, details |
+| **Pagination**    | Navigate pages, shows current page and total logs              |
+| **Controls**      | Apply Filters, Clear, Previous, Next buttons                   |
 
 ### Filtering Examples
 
 ```
 Find failed login attempts today:
   ├─ Status: Failure
-  ├─ Action: login  
+  ├─ Action: login
   └─ Date: today to today
 
 Find password resets this week:
@@ -136,6 +141,7 @@ Find admin activities:
 ### Automatic Logging
 
 Every API request to `/api/*` is automatically logged with:
+
 - **User** - ID, name, email, role, avatar
 - **Action** - Type: login, logout, created_resource, etc.
 - **Time** - Exact timestamp to milliseconds
@@ -172,23 +178,25 @@ Access
 
 ### Who Can View Logs
 
-| User Role | Access | Details |
-|-----------|--------|---------|
-| **Admin** | ✅ Full | See all activities, use all filters |
-| **QA Engineer** | ✅ Own only | View own activities via /my-activity |
-| **Tester** | ✅ Own only | View own activities via /my-activity |
-| **Developer** | ✅ Own only | View own activities via /my-activity |
-| **Non-authenticated** | ❌ None | Redirected to login |
+| User Role             | Access      | Details                              |
+| --------------------- | ----------- | ------------------------------------ |
+| **Admin**             | ✅ Full     | See all activities, use all filters  |
+| **QA Engineer**       | ✅ Own only | View own activities via /my-activity |
+| **Tester**            | ✅ Own only | View own activities via /my-activity |
+| **Developer**         | ✅ Own only | View own activities via /my-activity |
+| **Non-authenticated** | ❌ None     | Redirected to login                  |
 
 ### Data Protection
 
 **What is NEVER logged:**
+
 - ❌ Passwords (hashed, stored separately)
 - ❌ 2FA secrets (secure storage, not in logs)
 - ❌ JWT tokens (no full tokens in logs)
 - ❌ Refresh tokens (hashed separately)
 
 **What IS logged safely:**
+
 - ✅ User ID (for audit trail)
 - ✅ Action type (for activity tracking)
 - ✅ IP address (for security/fraud detection)
@@ -200,6 +208,7 @@ Access
 ## 🎨 User Interface
 
 ### Color Scheme
+
 ```
 Dark Theme:
   Background:  Navy (#0a0e27)
@@ -219,6 +228,7 @@ Role Badges:
 ```
 
 ### Responsive Design
+
 ```
 Desktop (1920px+):
   ├─ Full filter bar in one row
@@ -248,6 +258,7 @@ Extra Small (< 680px):
 ## 📈 Pagination & Performance
 
 ### How Pagination Works
+
 ```
 Default: 50 logs per page
 Loads: Query returns next 50 logs
@@ -256,6 +267,7 @@ Speed: <200ms for typical queries (with indexes)
 ```
 
 ### Database Optimization
+
 ```
 Indexes Created:
   ✓ PRIMARY (id)        - Fast lookups
@@ -277,6 +289,7 @@ Query Pattern:
 ## 🔧 API Endpoints
 
 ### View All Logs (Admin Only)
+
 ```
 GET /api/audit-logs
 
@@ -313,6 +326,7 @@ Response:
 ```
 
 ### View Your Activity
+
 ```
 GET /api/audit-logs/my-activity
 
@@ -325,6 +339,7 @@ Response:
 ```
 
 ### View Failed Logins (Last 24h)
+
 ```
 GET /api/audit-logs/failed-logins
 
@@ -341,6 +356,7 @@ Response:
 ## 📱 Mobile Experience
 
 ### Layout Optimization
+
 ```
 Mobile devices automatically get:
   ✓ Stacked filter sections (one per row)
@@ -363,6 +379,7 @@ Device Support:
 ## 🚀 Deployment Checklist
 
 ### Before Production
+
 - [ ] Database migrations run: `npm run db:migrate`
 - [ ] Admin user exists in database
 - [ ] HTTPS/SSL configured
@@ -373,6 +390,7 @@ Device Support:
 - [ ] Log retention policy defined
 
 ### After Deployment
+
 - [ ] Test /logs endpoint as admin user
 - [ ] Verify filters work correctly
 - [ ] Check pagination loads properly
@@ -382,6 +400,7 @@ Device Support:
 - [ ] Configure alerting for failed logins (optional)
 
 ### Production Tips
+
 ```
 1. Archive old logs (>90 days) for performance
 2. Monitor audit_logs table size
@@ -397,9 +416,10 @@ Device Support:
 ## 🐛 Troubleshooting
 
 ### Dashboard Not Showing
+
 ```
 Issue: GET /logs shows blank or redirects
-Fix:   
+Fix:
   1. Login as admin user first
   2. Check user role in database: SELECT role FROM users WHERE id = '...'
   3. Ensure migrations ran: npm run db:migrate
@@ -407,6 +427,7 @@ Fix:
 ```
 
 ### No Logs Appearing
+
 ```
 Issue: Table shows "No Logs Found"
 Fix:
@@ -417,6 +438,7 @@ Fix:
 ```
 
 ### Filters Not Working
+
 ```
 Issue: Apply Filters button doesn't work
 Fix:
@@ -428,6 +450,7 @@ Fix:
 ```
 
 ### Slow Performance
+
 ```
 Issue: Dashboard loads slowly
 Fix:
@@ -444,11 +467,13 @@ Fix:
 ## 📚 Documentation Files
 
 ### Main Documentation
+
 - **LOGS_DASHBOARD.md** - Complete setup and usage guide (400+ lines)
 - **LOGS_ARCHITECTURE.md** - Technical architecture and diagrams (300+ lines)
 - **SETUP_LOGS_DASHBOARD.sh** - Quick reference script
 
 ### Source Code
+
 - **frontend/src/pages/Logs.jsx** - Dashboard component with comments
 - **frontend/src/styles/logs.css** - Styling with organized sections
 - **backend/src/middleware/logger.js** - Middleware implementation
@@ -476,6 +501,7 @@ Fix:
 ## 🎓 Learning Resources
 
 ### How the System Works
+
 1. User makes API request (login, create test case, etc.)
 2. logActivity middleware intercepts request
 3. After response, middleware logs to audit_logs table
@@ -486,6 +512,7 @@ Fix:
 8. Admin can filter, search, and analyze activities
 
 ### Key Technologies
+
 - **Frontend**: React 18, Axios, State hooks
 - **Backend**: Express.js, Knex.js query builder
 - **Database**: MySQL 8.0 with proper indexes
@@ -508,6 +535,7 @@ You now have a **production-ready access logs dashboard** that:
 8. **Audits thoroughly** with immutable records
 
 ### Next Steps
+
 1. Start the development server: `npm run dev`
 2. Login as admin: http://localhost:3000/logs
 3. Generate some activity (login, create resources)

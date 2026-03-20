@@ -3,6 +3,7 @@
  */
 
 const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 const logger = require('./logger');
@@ -173,7 +174,7 @@ async function createAuditLog(
   { userId, action, entityType, entityId, changes, ipAddress, userAgent, status = 'success' }
 ) {
   try {
-    const auditId = crypto.randomUUID();
+    const auditId = uuidv4();
     await db('audit_logs').insert({
       id: auditId,
       user_id: userId,
@@ -187,7 +188,8 @@ async function createAuditLog(
     });
     logger.info(`Audit log created: ${action} by user ${userId}`);
   } catch (error) {
-    logger.error('Failed to create audit log:', error);
+    logger.error('Failed to create audit log:', error.message, error.stack);
+    throw error;
   }
 }
 
