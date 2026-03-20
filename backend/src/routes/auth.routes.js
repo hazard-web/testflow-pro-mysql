@@ -119,7 +119,9 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('password')
       .isLength({ min: 8 })
-      .matches(/^(?=.*[A-Z])(?=.*\d)/),
+      .withMessage('Password must be at least 8 characters')
+      .matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+      .withMessage('Password must contain uppercase letter, number, and special character (@$!%*?&)'),
   ],
   async (req, res, next) => {
     try {
@@ -624,6 +626,111 @@ router.post(
       res.json({ message: 'Password reset successfully' });
     } catch (error) {
       logger.error('Password reset confirm error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────
+// POST /api/auth/create-user (ADMIN ONLY)
+// ─────────────────────────────────────────
+router.post(
+  '/create-user',
+  authenticate,
+  [body('name').trim().notEmpty(), body('email').isEmail().normalizeEmail(), body('team_type').notEmpty()],
+  async (req, res) => {
+    try {
+      // Check admin role
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can create users' });
+      }
+
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+      const { name, email, team_type } = req.body;
+
+      // Check if email exists
+      const existing = await db('users').where({ email }).first();
+      if (existing) return res.status(409).json({ error: 'Email already registered' });
+
+      // Generate temporary password
+      const tempPassword = generateRandomToken().slice(0, 12);
+      const password_hash = await bcrypt.hash(tempPassword, 12);
+
+      const initials = name
+        .split(' ')
+        .map(w => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+      const userId = uuidv4();
+      const userRole = team_type === 'developer' ? 'developer' : 'qa_engineer';
+
+      // Create user
+      await db('users').insert({
+        id: userId,
+        name,
+        email,
+        password_hash,
+        initials,
+        role: userRole,
+        is_active: true,
+      });
+
+      // Add to team (developers or testers)
+      if (team_type === 'developer') {
+        await db('developers').insert({
+          id: uuidv4(),
+          name,
+          email,
+          initials,
+          avatar_color: 'av-green',
+          specialisation: 'Full Stack',
+        });
+      } else {
+        await db('testers').insert({
+          id: uuidv4(),
+          name,
+          email,
+          initials,
+          avatar_color: 'av-blue',
+          role: 'QA Engineer',
+        });
+      }
+
+      // Create 2FA settings
+      await db('two_fa_settings').insert({
+        id: uuidv4(),
+        user_id: userId,
+        is_enabled: false,
+      });
+
+      // Audit log
+      await createAuditLog(db, {
+        userId: req.user.id,
+        action: 'admin_created_user',
+        entityType: 'user',
+        entityId: userId,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+
+      // Return user with temporary password (in production, send via email)
+      res.status(201).json({
+        message: 'User created successfully',
+        user: {
+          id: userId,
+          name,
+          email,
+          role: userRole,
+          temporary_password: tempPassword,
+          note: 'User should change password after first login',
+        },
+      });
+    } catch (error) {
+      logger.error('Create user error:', error);
       res.status(500).json({ error: error.message });
     }
   }

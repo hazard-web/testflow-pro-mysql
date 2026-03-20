@@ -3931,6 +3931,15 @@ export function Settings() {
     confirmPassword: '',
   });
   const [passErr, setPassErr] = useState('');
+  const [createUserModal, setCreateUserModal] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    name: '',
+    email: '',
+    team_type: 'qa_engineer',
+  });
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserMsg, setCreateUserMsg] = useState(null);
+
   const saveProfile = async () => {
     try {
       const updated = await updateProfile.mutateAsync(profile);
@@ -3939,6 +3948,7 @@ export function Settings() {
       // Silent error handling
     }
   };
+
   const savePass = async () => {
     setPassErr('');
     if (passForm.newPassword !== passForm.confirmPassword) {
@@ -3959,6 +3969,38 @@ export function Settings() {
       // Silent error handling
     }
   };
+
+  const handleCreateUser = async () => {
+    setCreateUserLoading(true);
+    setCreateUserMsg(null);
+    try {
+      const response = await fetch('/api/auth/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify(createUserForm),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      setCreateUserMsg({
+        success: true,
+        data: data.user,
+        message: `User created successfully!\n\nEmail: ${data.user.email}\nTemporary Password: ${data.user.temporary_password}\n\nShare these credentials with the user.`,
+      });
+      setCreateUserForm({ name: '', email: '', team_type: 'qa_engineer' });
+    } catch (err) {
+      setCreateUserMsg({
+        success: false,
+        message: err.message || 'Failed to create user',
+      });
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       <div className="topbar">
@@ -3968,7 +4010,69 @@ export function Settings() {
       </div>
       <div className="content">
         <div style={{ maxWidth: 560 }}>
-          <div className="sec-lbl">Profile</div>
+          {user?.role === 'admin' && (
+            <>
+              <div className="sec-lbl">Admin - Create User</div>
+              <div className="card">
+                <div className="fg">
+                  <label className="fl">User Name</label>
+                  <input
+                    className="fi"
+                    placeholder="John Doe"
+                    value={createUserForm.name}
+                    onChange={e => setCreateUserForm(p => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div className="fg">
+                  <label className="fl">Email</label>
+                  <input
+                    className="fi"
+                    placeholder="john@example.com"
+                    type="email"
+                    value={createUserForm.email}
+                    onChange={e => setCreateUserForm(p => ({ ...p, email: e.target.value }))}
+                  />
+                </div>
+                <div className="fg">
+                  <label className="fl">Role</label>
+                  <select
+                    className="fi fi-sel"
+                    value={createUserForm.team_type}
+                    onChange={e => setCreateUserForm(p => ({ ...p, team_type: e.target.value }))}
+                  >
+                    <option value="qa_engineer">QA Engineer</option>
+                    <option value="developer">Developer</option>
+                  </select>
+                </div>
+                {createUserMsg && (
+                  <div
+                    style={{
+                      padding: '12px',
+                      borderRadius: '4px',
+                      marginBottom: '12px',
+                      fontSize: '12px',
+                      whiteSpace: 'pre-wrap',
+                      backgroundColor: createUserMsg.success ? '#10b981' : '#ef4444',
+                      color: 'white',
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  >
+                    {createUserMsg.success
+                      ? `✅ ${createUserMsg.message}`
+                      : `❌ ${createUserMsg.message}`}
+                  </div>
+                )}
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleCreateUser}
+                  disabled={createUserLoading}
+                >
+                  {createUserLoading ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </>
+          )}
+          <div className="sec-lbl">{user?.role === 'admin' ? 'Profile' : ''}</div>
           <div className="card">
             <div className="form-row2">
               <div className="fg">

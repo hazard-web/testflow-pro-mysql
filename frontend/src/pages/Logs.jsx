@@ -9,6 +9,7 @@ const LogsDashboard = () => {
   const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedLog, setSelectedLog] = useState(null);
 
   // Filters
   const [filters, setFilters] = useState({
@@ -47,27 +48,32 @@ const LogsDashboard = () => {
     setError('');
     try {
       const offset = (page - 1) * pagination.limit;
-      const query = new URLSearchParams({
+      // Build query params - only include filters if they have values
+      const queryObj = {
         limit: pagination.limit,
         offset,
-        ...(filters.action && { action: filters.action }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.search && { search: filters.search }),
-        ...(filters.startDate && { startDate: filters.startDate }),
-        ...(filters.endDate && { endDate: filters.endDate }),
-      });
+      };
+      
+      if (filters.action) queryObj.action = filters.action;
+      if (filters.status) queryObj.status = filters.status;
+      if (filters.search) queryObj.search = filters.search;
+      if (filters.startDate) queryObj.startDate = filters.startDate;
+      if (filters.endDate) queryObj.endDate = filters.endDate;
+
+      const query = new URLSearchParams(queryObj);
 
       const response = await api.get(`/audit-logs?${query}`);
-      setLogs(response.data.data);
+      setLogs(response.data.data || []);
       setSummary(response.data.summary || {});
       setPagination(prev => ({
         ...prev,
-        total: response.data.pagination.total,
+        total: response.data.pagination?.total || 0,
         offset,
         currentPage: page,
       }));
     } catch (err) {
       setError('Failed to load logs: ' + (err.response?.data?.error || err.message));
+      console.error('Fetch logs error:', err);
     } finally {
       setLoading(false);
     }
@@ -103,6 +109,40 @@ const LogsDashboard = () => {
     if (newPage >= 1 && newPage <= Math.ceil(pagination.total / pagination.limit)) {
       fetchLogs(newPage);
     }
+  };
+
+  const _handleLoadMore = () => {
+    // Load with increased limit (load all remaining)
+    const offset = pagination.offset;
+    setLoading(true);
+    setError('');
+    (async () => {
+      try {
+        const queryObj = {
+          limit: 1000, // Load up to 1000 logs
+          offset,
+        };
+        if (filters.action) queryObj.action = filters.action;
+        if (filters.status) queryObj.status = filters.status;
+        if (filters.search) queryObj.search = filters.search;
+        if (filters.startDate) queryObj.startDate = filters.startDate;
+        if (filters.endDate) queryObj.endDate = filters.endDate;
+
+        const query = new URLSearchParams(queryObj);
+        const response = await api.get(`/audit-logs?${query}`);
+        setLogs(response.data.data || []);
+        setPagination(prev => ({
+          ...prev,
+          total: response.data.pagination?.total || 0,
+          offset,
+          limit: 1000,
+        }));
+      } catch (err) {
+        setError('Failed to load logs: ' + (err.response?.data?.error || err.message));
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   if (user?.role !== 'admin') {
@@ -225,6 +265,26 @@ const LogsDashboard = () => {
             <button onClick={handleClearFilters} className="btn-filter-clear">
               Clear
             </button>
+            <button 
+              onClick={() => {
+                setFilters(prev => ({...prev, action: 'user_logged_in'}));
+                setTimeout(() => fetchLogs(1), 0);
+              }}
+              className="btn-quick-filter"
+              title="Show only login events"
+            >
+              🔑 Logins
+            </button>
+            <button 
+              onClick={() => {
+                setFilters(prev => ({...prev, action: 'user_logged_out'}));
+                setTimeout(() => fetchLogs(1), 0);
+              }}
+              className="btn-quick-filter"
+              title="Show only logout events"
+            >
+              🚪 Logouts
+            </button>
           </div>
         </div>
       </div>
@@ -295,6 +355,7 @@ const LogsDashboard = () => {
                     <td className="details">
                       <button
                         className="btn-view-details"
+                        onClick={() => setSelectedLog(log)}
                         title={`Entity: ${log.entity_type} | ID: ${log.entity_id}`}
                       >
                         View
@@ -342,6 +403,75 @@ const LogsDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      {selectedLog && (
+        <div className="modal-overlay" onClick={() => setSelectedLog(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📋 Log Details</h2>
+              <button
+                className="modal-close"
+                onClick={() => setSelectedLog(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="detail-row">
+                <label>Timestamp:</label>
+                <span>{new Date(selectedLog.created_at).toLocaleString()}</span>
+              </div>
+              <div className="detail-row">
+                <label>User:</label>
+                <span>{selectedLog.user_name || 'Unknown'} ({selectedLog.user_email || 'N/A'})</span>
+              </div>
+              <div className="detail-row">
+                <label>Role:</label>
+                <span>{selectedLog.user_role || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <label>Action:</label>
+                <span className="action-badge">{selectedLog.action}</span>
+              </div>
+              <div className="detail-row">
+                <label>Entity Type:</label>
+                <span>{selectedLog.entity_type || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <label>Entity ID:</label>
+                <span>{selectedLog.entity_id || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <label>IP Address:</label>
+                <span className="ip-badge">{selectedLog.ip_address || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <label>User Agent:</label>
+                <span className="user-agent">{selectedLog.user_agent || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <label>Status:</label>
+                <span className={`status-badge status-${selectedLog.status}`}>
+                  {selectedLog.status === 'success' ? '✓ Success' : '✗ Failure'}
+                </span>
+              </div>
+              <div className="detail-row">
+                <label>Log ID:</label>
+                <span className="log-id">{selectedLog.id}</span>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-close"
+                onClick={() => setSelectedLog(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

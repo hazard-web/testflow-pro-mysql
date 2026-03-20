@@ -29,6 +29,10 @@ const { projectRouter } = require('./routes/all.routes');
 
 const app = express();
 
+// ── Trust proxy for real IP addresses ──
+// This is important when running behind a reverse proxy (nginx, load balancer, etc)
+app.set('trust proxy', process.env.TRUST_PROXY || 1);
+
 // ── Security ──
 app.use(helmet());
 const allowedOrigins = [
