@@ -12,10 +12,9 @@ build/
 .env
 .env.local
 .env.*.local
-# Keep template env files but not real ones:
-# .env.development  ← keep (has no secrets)
-# .env.staging      ← keep (has no secrets, uses placeholders)
-# .env.production   ← keep (has no secrets, uses placeholders)
+.env.development
+.env.production
+.env.staging
 
 # ── Logs ──
 logs/
