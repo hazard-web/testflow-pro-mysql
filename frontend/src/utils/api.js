@@ -1,8 +1,18 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+// Determine API URL based on environment
+const getApiUrl = () => {
+  // If VITE_API_URL is explicitly set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Default: use relative path (works with Vite proxy in dev, same-origin in prod)
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: getApiUrl(),
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });

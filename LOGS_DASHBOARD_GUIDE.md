@@ -7,6 +7,7 @@ The Access Logs Dashboard provides comprehensive monitoring of all user activiti
 ## Features
 
 ### 1. **Complete Activity Logging**
+
 - ✅ User login/logout events with real IP addresses
 - ✅ All API endpoint accesses
 - ✅ Resource creation, modification, deletion
@@ -17,12 +18,15 @@ The Access Logs Dashboard provides comprehensive monitoring of all user activiti
 ### 2. **Dashboard Views**
 
 #### Summary Cards
+
 Display at-a-glance statistics:
+
 - **Total Logs**: Count of all recorded events
 - **Total Users**: Number of active users
 - **Admins**: Count of admin-level accounts
 
 #### Logs Table
+
 Detailed table showing:
 | Column | Details |
 |--------|---------|
@@ -38,11 +42,13 @@ Detailed table showing:
 ### 3. **Filtering & Search**
 
 #### Quick Filters
+
 - 🔑 **Logins Button**: Instantly filter to show only user login events
 - 🚪 **Logouts Button**: Instantly filter to show only user logout events
 - **Clear**: Reset all filters and show all logs
 
 #### Advanced Filters
+
 - **Action Filter**: Select from dropdown of all event types:
   - user_logged_in
   - user_logged_out
@@ -82,16 +88,19 @@ Log ID:       550e8400-e29b-41d4-a716-446655440000
 ### IP Address Tracking
 
 **How it works:**
+
 1. When a user makes any request, the Express server captures their IP address via `req.ip`
 2. IP is stored in the `audit_logs` table
 3. Server is configured with `trust proxy` for correct IP extraction when behind reverse proxies
 
 **IP Sources (in order of priority):**
+
 1. X-Forwarded-For header (when behind proxy)
 2. X-Real-IP header (alternative proxy header)
 3. Connection socket address (direct connection)
 
 **Examples:**
+
 - Local development: `::1` (IPv6 localhost)
 - Local development: `127.0.0.1` (IPv4 localhost)
 - Production: Real client IP address
@@ -99,11 +108,13 @@ Log ID:       550e8400-e29b-41d4-a716-446655440000
 ### User Agent Tracking
 
 Captures browser and client information:
+
 - Browser type and version
 - Operating system
 - Device type
 
 Example:
+
 ```
 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36
 ```
@@ -111,6 +122,7 @@ Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like 
 ### Login/Logout Events
 
 #### Login Event (`user_logged_in`)
+
 ```javascript
 // Recorded at: backend/src/routes/auth.routes.js (line ~248)
 await createAuditLog(db, {
@@ -118,17 +130,19 @@ await createAuditLog(db, {
   action: 'user_logged_in',
   entityType: 'user',
   entityId: user.id,
-  ipAddress: req.ip,        // Real IP captured
+  ipAddress: req.ip, // Real IP captured
   userAgent: req.get('user-agent'),
 });
 ```
 
 **When triggered:**
+
 - User successfully authenticates with email/password
 - 2FA verification completed (if enabled)
 - Refresh token issued and stored
 
 #### Logout Event (`user_logged_out`)
+
 ```javascript
 // Recorded at: backend/src/routes/auth.routes.js (line ~364)
 await createAuditLog(db, {
@@ -136,12 +150,13 @@ await createAuditLog(db, {
   action: 'user_logged_out',
   entityType: 'user',
   entityId: req.user.id,
-  ipAddress: req.ip,        // Real IP captured
+  ipAddress: req.ip, // Real IP captured
   userAgent: req.get('user-agent'),
 });
 ```
 
 **When triggered:**
+
 - User clicks logout button
 - Refresh token revoked
 - Session data cleared
@@ -169,27 +184,27 @@ CREATE TABLE audit_logs (
 
 ```sql
 -- Get all login events for a user
-SELECT * FROM audit_logs 
-WHERE action = 'user_logged_in' 
+SELECT * FROM audit_logs
+WHERE action = 'user_logged_in'
 AND user_id = 'user-uuid'
 ORDER BY created_at DESC;
 
 -- Get all events from a specific IP
-SELECT user_id, action, created_at 
-FROM audit_logs 
+SELECT user_id, action, created_at
+FROM audit_logs
 WHERE ip_address = '192.168.1.100'
 ORDER BY created_at DESC;
 
 -- Get failed login attempts
-SELECT user_id, ip_address, created_at 
-FROM audit_logs 
-WHERE action = 'user_logged_in' 
+SELECT user_id, ip_address, created_at
+FROM audit_logs
+WHERE action = 'user_logged_in'
 AND status = 'failure'
 ORDER BY created_at DESC;
 
 -- Get login/logout pairs for audit trail
 SELECT action, created_at, user_id, ip_address
-FROM audit_logs 
+FROM audit_logs
 WHERE action IN ('user_logged_in', 'user_logged_out')
 ORDER BY user_id, created_at DESC;
 ```
@@ -197,9 +212,11 @@ ORDER BY user_id, created_at DESC;
 ## API Endpoints
 
 ### GET /api/audit-logs (Admin Only)
+
 Fetch audit logs with filtering and pagination.
 
 **Parameters:**
+
 - `limit` (default: 50) - Results per page
 - `offset` (default: 0) - Starting position
 - `action` - Filter by event type
@@ -210,12 +227,14 @@ Fetch audit logs with filtering and pagination.
 - `endDate` - End of date range
 
 **Example Request:**
+
 ```bash
 GET /api/audit-logs?action=user_logged_in&limit=100&offset=0
 Authorization: Bearer <access_token>
 ```
 
 **Example Response:**
+
 ```json
 {
   "data": [
@@ -251,16 +270,19 @@ Authorization: Bearer <access_token>
 ## Security Considerations
 
 ### Access Control
+
 - ✅ Only **admin** users can view the logs dashboard
 - ✅ Regular users can view their own activity via `/api/audit-logs/my-activity`
 - ✅ All audit log endpoints require authentication
 
 ### Data Sensitivity
+
 - ⚠️ IP addresses reveal user location information
 - ⚠️ User agents can identify devices and browsers
 - ⚠️ Login/logout patterns reveal user behavior
 
 **Recommendations:**
+
 - Limit access to logs dashboard to authorized admins only
 - Regularly review logs for suspicious patterns
 - Monitor failed login attempts (potential brute force attacks)
@@ -279,12 +301,14 @@ app.set('trust proxy', process.env.TRUST_PROXY || 1);
 ```
 
 **Trust Proxy Values:**
+
 - `1` (default): Trust only 1 proxy (most common)
 - `true`: Trust all proxies
 - IP address: Trust specific IP only
 - Array: Trust specific IPs
 
 **Environment Variable:**
+
 ```bash
 # In .env
 TRUST_PROXY=1
@@ -313,6 +337,7 @@ server {
 **Cause:** Running in development or server not configured correctly for production.
 
 **Solution:**
+
 1. Check if running behind proxy
 2. Verify `trust proxy` setting in server.js
 3. Check proxy headers (X-Forwarded-For, X-Real-IP)
@@ -322,6 +347,7 @@ server {
 **Cause:** Events may be filtered out by action filter.
 
 **Solution:**
+
 1. Click "Clear" to remove all filters
 2. Use "🔑 Logins" quick filter button
 3. Check if user actually logged in/out
@@ -330,11 +356,13 @@ server {
 ### Issue: Dashboard shows "No Logs Found"
 
 **Possible Causes:**
+
 - No logs have been recorded yet (first load)
 - Filters are too restrictive
 - User account is not admin
 
 **Solution:**
+
 1. Perform a login/logout to generate events
 2. Click "Clear" button to reset filters
 3. Verify user role is "admin"
@@ -364,11 +392,11 @@ CREATE INDEX idx_created ON audit_logs(created_at);
 
 ```sql
 -- Archive logs older than 90 days
-INSERT INTO audit_logs_archive 
-SELECT * FROM audit_logs 
+INSERT INTO audit_logs_archive
+SELECT * FROM audit_logs
 WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
 
-DELETE FROM audit_logs 
+DELETE FROM audit_logs
 WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
 ```
 
@@ -382,6 +410,7 @@ app.use('/api/', logActivity);
 ```
 
 **Logged Information:**
+
 - HTTP method
 - Endpoint path
 - Response status
@@ -425,6 +454,7 @@ Potential improvements to consider:
 ## Support & Documentation
 
 For more information:
+
 - API Documentation: See API endpoints section above
 - Database Schema: Check `database/init.sql`
 - Backend Routes: `backend/src/routes/audit.routes.js`

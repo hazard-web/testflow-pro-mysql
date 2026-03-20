@@ -121,7 +121,9 @@ router.post(
       .isLength({ min: 8 })
       .withMessage('Password must be at least 8 characters')
       .matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
-      .withMessage('Password must contain uppercase letter, number, and special character (@$!%*?&)'),
+      .withMessage(
+        'Password must contain uppercase letter, number, and special character (@$!%*?&)'
+      ),
   ],
   async (req, res, _next) => {
     try {
@@ -654,7 +656,11 @@ router.post(
 router.post(
   '/create-user',
   authenticate,
-  [body('name').trim().notEmpty(), body('email').isEmail().normalizeEmail(), body('team_type').notEmpty()],
+  [
+    body('name').trim().notEmpty(),
+    body('email').isEmail().normalizeEmail(),
+    body('team_type').notEmpty(),
+  ],
   async (req, res) => {
     try {
       // Check admin role

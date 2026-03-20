@@ -3,6 +3,7 @@
 ## 🚀 Quick Start
 
 ### Access the Dashboard
+
 ```
 1. Login: admin@testflow.dev / Password@123
 2. Go to Settings page
@@ -13,27 +14,30 @@
 ## 📋 Dashboard at a Glance
 
 ### Summary Section
-| Card | Shows |
-|------|-------|
-| 📋 Total Logs | Count of all recorded events |
-| 👥 Total Users | Number of registered users |
-| 🔐 Admins | Count of admin accounts |
+
+| Card           | Shows                        |
+| -------------- | ---------------------------- |
+| 📋 Total Logs  | Count of all recorded events |
+| 👥 Total Users | Number of registered users   |
+| 🔐 Admins      | Count of admin accounts      |
 
 ### Log Columns
-| Column | Content |
-|--------|---------|
-| Timestamp | Date/time of event |
-| User | User name with avatar |
-| Email | User email address |
-| Role | admin / developer / tester |
-| Action | Event type (login, logout, etc.) |
-| IP Address | Source IP (::1 = localhost) |
-| Status | ✓ Success or ✗ Failure |
-| Details | Click "View" button |
+
+| Column     | Content                          |
+| ---------- | -------------------------------- |
+| Timestamp  | Date/time of event               |
+| User       | User name with avatar            |
+| Email      | User email address               |
+| Role       | admin / developer / tester       |
+| Action     | Event type (login, logout, etc.) |
+| IP Address | Source IP (::1 = localhost)      |
+| Status     | ✓ Success or ✗ Failure           |
+| Details    | Click "View" button              |
 
 ## 🔍 Filtering Tips
 
 ### Quick Buttons
+
 ```
 🔑 Logins    → Show only user_logged_in events
 🚪 Logouts   → Show only user_logged_out events
@@ -41,6 +45,7 @@ Clear        → Show all logs
 ```
 
 ### Advanced Filters
+
 ```
 Action       → Select from dropdown (user_logged_in, etc.)
 Status       → Success / Failure
@@ -53,6 +58,7 @@ Apply        → Apply all filters
 ## 👁️ Viewing Details
 
 ### Click "View" to see:
+
 ```
 Timestamp       2024-01-15 10:30:45 AM
 User           Admin User (admin@testflow.dev)
@@ -71,6 +77,7 @@ Log ID         550e8400-e29b-41d4-a716-446655440000
 ### What's Getting Logged
 
 **Login Events**
+
 ```
 Action: user_logged_in
 - Who: User name/email
@@ -81,6 +88,7 @@ Action: user_logged_in
 ```
 
 **Logout Events**
+
 ```
 Action: user_logged_out
 - Who: User name/email
@@ -90,6 +98,7 @@ Action: user_logged_out
 ```
 
 **Other Events**
+
 ```
 - user_registered: New user created
 - created_resource: Resource created
@@ -101,6 +110,7 @@ Action: user_logged_out
 ## 💡 Common Use Cases
 
 ### 1. See Who's Logged In Today
+
 ```
 1. Click "Clear" to show all logs
 2. Click "🔑 Logins" button
@@ -108,13 +118,15 @@ Action: user_logged_out
 ```
 
 ### 2. Track Logout Events
+
 ```
-1. Click "Clear" 
+1. Click "Clear"
 2. Click "🚪 Logouts" button
 3. See when users logged out
 ```
 
 ### 3. Monitor Failed Logins
+
 ```
 1. Select "Status" = "Failure"
 2. Select "Action" = "user_logged_in" (if available)
@@ -123,6 +135,7 @@ Action: user_logged_out
 ```
 
 ### 4. Search for Specific User
+
 ```
 1. Type email or name in "Search" field
 2. Click "Apply Filters"
@@ -130,6 +143,7 @@ Action: user_logged_out
 ```
 
 ### 5. Check Activity by Date
+
 ```
 1. Set "Start Date" = 2024-01-01
 2. Set "End Date" = 2024-01-31
@@ -138,6 +152,7 @@ Action: user_logged_out
 ```
 
 ### 6. Review Specific Activity
+
 ```
 1. Click "View" on any log row
 2. Modal opens with full details
@@ -148,6 +163,7 @@ Action: user_logged_out
 ## 🔒 Security Insights
 
 ### What the IP Address Tells You
+
 ```
 ::1 or 127.0.0.1  = Localhost (your computer)
 192.168.x.x       = Local network
@@ -155,6 +171,7 @@ Action: user_logged_out
 ```
 
 ### What the User Agent Tells You
+
 ```
 Mozilla/5.0       = Firefox or Chrome based
 Safari            = Apple browser
@@ -168,11 +185,12 @@ Android           = Android device
 ## ⚙️ API Endpoint Reference
 
 ### Get All Logs (Admin Only)
+
 ```bash
 GET /api/audit-logs
 Headers:
   Authorization: Bearer <token>
-  
+
 Query Parameters:
   limit=50              # Results per page (default: 50)
   offset=0              # Starting position (default: 0)
@@ -181,12 +199,13 @@ Query Parameters:
   search=admin@         # Search in name, email, IP, action
   startDate=2024-01-01  # From date
   endDate=2024-01-31    # To date
-  
+
 Example:
 GET /api/audit-logs?action=user_logged_in&limit=100
 ```
 
 ### Response Structure
+
 ```json
 {
   "data": [
@@ -217,18 +236,19 @@ GET /api/audit-logs?action=user_logged_in&limit=100
 
 ## 🐛 Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| No logs showing | Click "Clear" to remove filters |
-| Can't access dashboard | Make sure you're logged in as admin |
-| IP shows as ::1 | This is correct for localhost |
-| Modal doesn't open | Try refreshing page, then click View |
-| Slow loading | Reduce page limit or add date filter |
-| Search not working | Check for typos in search term |
+| Problem                | Solution                             |
+| ---------------------- | ------------------------------------ |
+| No logs showing        | Click "Clear" to remove filters      |
+| Can't access dashboard | Make sure you're logged in as admin  |
+| IP shows as ::1        | This is correct for localhost        |
+| Modal doesn't open     | Try refreshing page, then click View |
+| Slow loading           | Reduce page limit or add date filter |
+| Search not working     | Check for typos in search term       |
 
 ## 📱 Mobile Tips
 
 ### On Phone/Tablet
+
 - Swipe left/right to scroll table
 - Tap "View" for full details
 - Details modal fills most of screen
@@ -236,6 +256,7 @@ GET /api/audit-logs?action=user_logged_in&limit=100
 - Single column layout
 
 ### Responsive Breakpoints
+
 ```
 Desktop: 1200px+    → Full table layout
 Tablet:  768-1200px → Adjusted spacing
@@ -244,22 +265,24 @@ Mobile:  <768px     → Single column
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| Tab | Navigate between elements |
-| Enter | Click focused button |
-| Escape | Close modal |
-| Ctrl+F | Browser search within page |
+| Shortcut | Action                     |
+| -------- | -------------------------- |
+| Tab      | Navigate between elements  |
+| Enter    | Click focused button       |
+| Escape   | Close modal                |
+| Ctrl+F   | Browser search within page |
 
 ## 📈 Performance Tips
 
 ### Load Faster
+
 1. Use date filters to limit results
 2. Search for specific user to narrow down
 3. Default 50 per page is optimized
 4. Use action filter to reduce results
 
 ### Load More Logs
+
 1. Click "Next" button to go to next page
 2. Or adjust limit if available
 3. Change offset in URL for more control
@@ -281,6 +304,7 @@ Mobile:  <768px     → Single column
 ## 📞 Quick Support
 
 ### Can't See Logs Dashboard?
+
 ```
 Check:
 1. Are you logged in? (Top right corner shows user)
@@ -290,6 +314,7 @@ Check:
 ```
 
 ### Dashboard Shows "No Logs Found"
+
 ```
 Reasons:
 1. No events logged yet (try logging in again)
@@ -299,6 +324,7 @@ Reasons:
 ```
 
 ### IP Address Wrong or Missing
+
 ```
 For Localhost:
 - Shows as ::1 or 127.0.0.1 ✓ (Correct)
@@ -312,12 +338,14 @@ For Production:
 ## 📚 Learn More
 
 ### Full Documentation
+
 - **LOGS_DASHBOARD_GUIDE.md** - Complete guide
 - **IMPLEMENTATION_SUMMARY.md** - Technical details
 - **Backend Code** - `src/routes/audit.routes.js`
 - **Frontend Code** - `src/pages/Logs.jsx`
 
 ### Database Queries
+
 ```bash
 # Count total logs
 SELECT COUNT(*) FROM audit_logs;
@@ -326,8 +354,8 @@ SELECT COUNT(*) FROM audit_logs;
 SELECT DISTINCT action FROM audit_logs;
 
 # Get logins from IP
-SELECT * FROM audit_logs 
-WHERE action = 'user_logged_in' 
+SELECT * FROM audit_logs
+WHERE action = 'user_logged_in'
 AND ip_address = '::1'
 ORDER BY created_at DESC;
 ```
@@ -335,16 +363,19 @@ ORDER BY created_at DESC;
 ## 🎯 Best Practices
 
 ### Daily
+
 - [ ] Check for failed login attempts
 - [ ] Review unusual IP addresses
 - [ ] Monitor resource access patterns
 
-### Weekly  
+### Weekly
+
 - [ ] Export logs for backup
 - [ ] Review user activities summary
 - [ ] Check for policy violations
 
 ### Monthly
+
 - [ ] Archive old logs
 - [ ] Review access trends
 - [ ] Update security rules if needed
@@ -355,7 +386,7 @@ ORDER BY created_at DESC;
 **Last Updated**: January 2024
 **Status**: ✅ Production Ready
 
-| **Backend API**       | http://localhost:5000/api            | API endpoints       |
+| **Backend API** | http://localhost:5000/api | API endpoints |
 
 ---
 

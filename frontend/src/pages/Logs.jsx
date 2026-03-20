@@ -53,7 +53,7 @@ const LogsDashboard = () => {
         limit: pagination.limit,
         offset,
       };
-      
+
       if (filters.action) queryObj.action = filters.action;
       if (filters.status) queryObj.status = filters.status;
       if (filters.search) queryObj.search = filters.search;
@@ -265,9 +265,9 @@ const LogsDashboard = () => {
             <button onClick={handleClearFilters} className="btn-filter-clear">
               Clear
             </button>
-            <button 
+            <button
               onClick={() => {
-                setFilters(prev => ({...prev, action: 'user_logged_in'}));
+                setFilters(prev => ({ ...prev, action: 'user_logged_in' }));
                 setTimeout(() => fetchLogs(1), 0);
               }}
               className="btn-quick-filter"
@@ -275,9 +275,9 @@ const LogsDashboard = () => {
             >
               🔑 Logins
             </button>
-            <button 
+            <button
               onClick={() => {
-                setFilters(prev => ({...prev, action: 'user_logged_out'}));
+                setFilters(prev => ({ ...prev, action: 'user_logged_out' }));
                 setTimeout(() => fetchLogs(1), 0);
               }}
               className="btn-quick-filter"
@@ -410,10 +410,7 @@ const LogsDashboard = () => {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>📋 Log Details</h2>
-              <button
-                className="modal-close"
-                onClick={() => setSelectedLog(null)}
-              >
+              <button className="modal-close" onClick={() => setSelectedLog(null)}>
                 ✕
               </button>
             </div>
@@ -424,7 +421,9 @@ const LogsDashboard = () => {
               </div>
               <div className="detail-row">
                 <label>User:</label>
-                <span>{selectedLog.user_name || 'Unknown'} ({selectedLog.user_email || 'N/A'})</span>
+                <span>
+                  {selectedLog.user_name || 'Unknown'} ({selectedLog.user_email || 'N/A'})
+                </span>
               </div>
               <div className="detail-row">
                 <label>Role:</label>
@@ -462,10 +461,7 @@ const LogsDashboard = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button
-                className="btn-close"
-                onClick={() => setSelectedLog(null)}
-              >
+              <button className="btn-close" onClick={() => setSelectedLog(null)}>
                 Close
               </button>
             </div>

@@ -1,15 +1,19 @@
 # Signup JSON Parsing Error - Fix Summary
 
 ## Problem
+
 When users attempted to sign up, they received the error:
+
 ```
 Failed to execute 'json' on 'Response': Unexpected end of JSON input
 ```
 
 ## Root Cause
+
 The **register endpoint** in the backend was not returning the required authentication tokens:
 
 ### What Was Happening
+
 1. Frontend signup form submitted registration data
 2. Backend register endpoint created the user in database
 3. But returned only: `{ message, user: { id, email, name } }`
@@ -18,7 +22,9 @@ The **register endpoint** in the backend was not returning the required authenti
 6. This caused the JSON parsing error
 
 ### The Mismatch
+
 **Backend response was:**
+
 ```json
 {
   "message": "Registration successful",
@@ -31,6 +37,7 @@ The **register endpoint** in the backend was not returning the required authenti
 ```
 
 **Frontend expected:**
+
 ```json
 {
   "message": "Registration successful",
@@ -48,6 +55,7 @@ The **register endpoint** in the backend was not returning the required authenti
 ```
 
 ## Solution
+
 Updated the `/api/auth/register` endpoint to:
 
 1. **Generate authentication tokens** (like login does)
@@ -62,9 +70,9 @@ Updated the `/api/auth/register` endpoint to:
 ```javascript
 // Before (lines 163-168)
 await createAuditLog(db, {...});
-res.status(201).json({ 
-  message: 'Registration successful', 
-  user: { id: userId, email, name } 
+res.status(201).json({
+  message: 'Registration successful',
+  user: { id: userId, email, name }
 });
 
 // After (lines 163-183)
@@ -104,6 +112,7 @@ res.status(201).json({
 ## Testing
 
 ### Test the Fix
+
 ```bash
 # Start backend
 npm run dev
@@ -128,8 +137,9 @@ curl -X POST http://localhost:5000/api/auth/register \
 ```
 
 ### Manual Test
+
 1. Open the app at http://localhost:3000
-2. Click "Sign Up" 
+2. Click "Sign Up"
 3. Enter details:
    - Name: Test User
    - Email: test@example.com
@@ -140,19 +150,21 @@ curl -X POST http://localhost:5000/api/auth/register \
 6. No JSON error should appear
 
 ## Files Modified
+
 - `backend/src/routes/auth.routes.js` - Register endpoint now returns tokens
 
 ## Commits
+
 ```
 commit 577399f
 Author: Copilot
 Date: [timestamp]
 
   Fix signup JSON parsing error - return tokens after registration
-  
-  The register endpoint was not returning accessToken and refreshToken, 
+
+  The register endpoint was not returning accessToken and refreshToken,
   causing 'Unexpected end of JSON input' error when frontend tried to parse them.
-  
+
   Changes:
   - Register endpoint now returns accessToken and refreshToken in response
   - Auto-login user after successful registration
@@ -161,7 +173,9 @@ Date: [timestamp]
 ```
 
 ## Status
+
 ✅ **FIXED AND DEPLOYED**
+
 - Committed to git
 - Pushed to GitHub
 - Ready for testing
@@ -169,17 +183,22 @@ Date: [timestamp]
 ## Related Code
 
 ### Frontend Signup Function
+
 **Location:** `frontend/src/context/AuthContext.jsx` (line 71-85)
+
 ```javascript
 const signup = async (name, email, password, teamType) => {
-  const res = await api.post('/auth/register', { 
-    name, email, password, team_type: teamType 
+  const res = await api.post('/auth/register', {
+    name,
+    email,
+    password,
+    team_type: teamType,
   });
-  
+
   // These fields now exist in response ✓
   localStorage.setItem('access_token', res.data.accessToken);
   localStorage.setItem('refresh_token', res.data.refreshToken);
-  
+
   // User data cached
   const userData = {
     id: res.data.user.id,
@@ -190,17 +209,20 @@ const signup = async (name, email, password, teamType) => {
     avatar_color: res.data.user.avatar_color,
   };
   localStorage.setItem('user_cache', JSON.stringify(userData));
-  
+
   setUser(res.data.user);
   return res.data.user;
 };
 ```
 
 ### Backend Register Endpoint
+
 **Location:** `backend/src/routes/auth.routes.js` (line 113-195)
 
 ## Rollback Info
+
 If needed, previous working version available at:
+
 ```bash
 git revert 577399f
 ```
