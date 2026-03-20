@@ -7,8 +7,8 @@
 // ─────────────────────────────────────────────
 require('dotenv').config({ path: `../../../.env.${process.env.NODE_ENV || 'development'}` });
 const request = require('supertest');
-const app = require('../server');
-const db = require('../config/database');
+const app = require('../src/server');
+const db = require('../src/config/database');
 
 let token = '';
 let tcId = '';
@@ -19,7 +19,7 @@ beforeAll(async () => {
   const res = await request(app)
     .post('/api/auth/login')
     .send({ email: 'admin@testflow.dev', password: 'Password@123' });
-  token = res.body.token;
+  token = res.body.accessToken;
 });
 
 afterAll(async () => {
@@ -33,7 +33,7 @@ describe('Auth', () => {
       .post('/api/auth/login')
       .send({ email: 'admin@testflow.dev', password: 'Password@123' });
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('token');
+    expect(res.body).toHaveProperty('accessToken');
     expect(res.body.user.email).toBe('admin@testflow.dev');
   });
 
