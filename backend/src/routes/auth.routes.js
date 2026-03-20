@@ -21,7 +21,13 @@ const {
   createAuditLog,
 } = require('../utils/security');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+// ── JWT Configuration ──
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  logger.error('❌ JWT_SECRET environment variable is not set');
+  throw new Error('JWT_SECRET environment variable is required for authentication');
+}
+
 const REFRESH_TOKEN_EXPIRY = '30d';
 const ACCESS_TOKEN_EXPIRY = '15m';
 const LOCK_THRESHOLD = 5; // Lock after 5 failed attempts
