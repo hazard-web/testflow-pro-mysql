@@ -15,6 +15,8 @@ build/
 .env.development
 .env.production
 .env.staging
+.env.production.example
+.env.*.example
 
 # ── Logs ──
 logs/
@@ -52,3 +54,19 @@ backend/uploads/*
 # ── Misc ──
 *.tsbuildinfo
 .eslintcache
+
+# ── Production-specific ──
+.vercel/
+.vercel-build-output/
+vercel.json
+VERCEL_DEPLOYMENT.md
+DEPLOYMENT_CHECKLIST.md
+.env.production.example
+
+# ── Docker ──
+docker-compose.override.yml
+
+# ── Database ──
+*.sql.backup
+*.sql.dump
+database/*.sql.backup
