@@ -1,0 +1,120 @@
+{
+  "folders": [
+    { "name": "🏠 Root",     "path": "."           },
+    { "name": "⚙️  Backend",  "path": "./backend"   },
+    { "name": "🎨 Frontend", "path": "./frontend"  },
+    { "name": "🗄️  Database", "path": "./database"  }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.rulers": [100],
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true,
+      "**/dist": false
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true
+    },
+    "emmet.includeLanguages": { "javascript": "javascriptreact" },
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "terminal.integrated.env.osx": { "NODE_ENV": "development" },
+    "terminal.integrated.env.linux": { "NODE_ENV": "development" },
+    "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+    "[javascriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+    "eslint.workingDirectories": ["./backend", "./frontend"]
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "bradlc.vscode-tailwindcss",
+      "eamodio.gitlens",
+      "ms-azuretools.vscode-docker",
+      "mtxr.sqltools",
+      "mtxr.sqltools-driver-pg",
+      "christian-kohler.path-intellisense",
+      "formulahendry.auto-rename-tag",
+      "pkief.material-icon-theme",
+      "mikestead.dotenv",
+      "humao.rest-client"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🚀 Backend (Node)",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/backend/src/server.js",
+        "envFile": "${workspaceFolder}/.env.development",
+        "restart": true,
+        "console": "integratedTerminal",
+        "skipFiles": ["<node_internals>/**"]
+      },
+      {
+        "name": "🧪 Jest Tests",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/backend/node_modules/.bin/jest",
+        "args": ["--runInBand", "--forceExit"],
+        "cwd": "${workspaceFolder}/backend",
+        "envFile": "${workspaceFolder}/.env.development",
+        "console": "integratedTerminal"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Start All (dev)",
+        "type": "shell",
+        "command": "npm run dev",
+        "group": { "kind": "build", "isDefault": true },
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "🗄️  DB Migrate",
+        "type": "shell",
+        "command": "npm run db:migrate",
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "🌱 DB Seed",
+        "type": "shell",
+        "command": "npm run db:seed",
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "♻️  DB Reset + Seed",
+        "type": "shell",
+        "command": "npm run db:reset",
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "🧪 Run Tests",
+        "type": "shell",
+        "command": "npm run test",
+        "group": { "kind": "test", "isDefault": true },
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "🐳 Docker Up",
+        "type": "shell",
+        "command": "docker-compose up -d",
+        "presentation": { "reveal": "always", "panel": "new" }
+      },
+      {
+        "label": "🐳 Docker Down",
+        "type": "shell",
+        "command": "docker-compose down",
+        "presentation": { "reveal": "always", "panel": "new" }
+      }
+    ]
+  }
+}

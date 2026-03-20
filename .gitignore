@@ -1,0 +1,55 @@
+# ── Dependencies ──
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build outputs ──
+dist/
+build/
+.vite/
+
+# ── Environment files (NEVER commit these) ──
+.env
+.env.local
+.env.*.local
+# Keep template env files but not real ones:
+# .env.development  ← keep (has no secrets)
+# .env.staging      ← keep (has no secrets, uses placeholders)
+# .env.production   ← keep (has no secrets, uses placeholders)
+
+# ── Logs ──
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ── OS ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── IDE ──
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Test coverage ──
+coverage/
+.nyc_output/
+
+# ── Uploads (user-generated content) ──
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ── Misc ──
+*.tsbuildinfo
+.eslintcache

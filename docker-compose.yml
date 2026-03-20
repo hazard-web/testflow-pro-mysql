@@ -1,0 +1,94 @@
+services:
+  # ── MySQL 8 Database ──
+  mysql:
+    image: mysql:8.0
+    container_name: testflow_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testflow_dev
+      MYSQL_USER: testflow_user
+      MYSQL_PASSWORD: testflow_pass
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-prootpassword']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: testflow_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Backend API ──
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: testflow_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: testflow_dev
+      DB_USER: testflow_user
+      DB_PASSWORD: testflow_pass
+      DB_SSL: 'false'
+      REDIS_HOST: redis
+      JWT_SECRET: dev_jwt_secret_change_in_prod_min32chars
+      JWT_EXPIRES_IN: 7d
+      PORT: 5000
+      CLIENT_URL: http://localhost:3000
+      RATE_LIMIT_MAX: 200
+      LOG_LEVEL: debug
+    ports:
+      - '5000:5000'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # ── Frontend ──
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: testflow_ui
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+      VITE_ENV: development
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+
+volumes:
+  mysql_data:
+  redis_data:

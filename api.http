@@ -1,0 +1,331 @@
+### TestFlow Pro — API Test Collection
+### Install "REST Client" extension in VS Code, then click "Send Request"
+
+@baseUrl = http://localhost:5000/api
+@token = YOUR_TOKEN_HERE
+
+# ──────────────────────────────────────────
+#  AUTH
+# ──────────────────────────────────────────
+
+### Register new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@testflow.dev",
+  "password": "Password@123",
+  "role": "qa_engineer"
+}
+
+###
+
+### Login (copy token from response → paste above @token)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@testflow.dev",
+  "password": "Password@123"
+}
+
+###
+
+### Get current user
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### Change password
+PATCH {{baseUrl}}/auth/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Password@123",
+  "newPassword": "NewPassword@456"
+}
+
+# ──────────────────────────────────────────
+#  TEST CASES
+# ──────────────────────────────────────────
+
+### Get all test cases
+GET {{baseUrl}}/test-cases
+Authorization: Bearer {{token}}
+
+###
+
+### Get test cases — filtered
+GET {{baseUrl}}/test-cases?status=Fail&priority=High&limit=10
+Authorization: Bearer {{token}}
+
+###
+
+### Search test cases
+GET {{baseUrl}}/test-cases?search=login
+Authorization: Bearer {{token}}
+
+###
+
+### Get single test case (replace ID)
+GET {{baseUrl}}/test-cases/REPLACE_WITH_TC_ID
+Authorization: Bearer {{token}}
+
+###
+
+### Create test case
+POST {{baseUrl}}/test-cases
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "TC-020: User logout clears session",
+  "module": "Authentication",
+  "priority": "High",
+  "environment": "Staging",
+  "type": "Functional",
+  "description": "Verify logout clears session and redirects to login.",
+  "steps": [
+    { "action": "Login as valid user", "expected": "Dashboard shown" },
+    { "action": "Click logout button", "expected": "Redirected to /login" },
+    { "action": "Try to access /dashboard", "expected": "Redirected back to /login" }
+  ]
+}
+
+###
+
+### Update test case status
+PATCH {{baseUrl}}/test-cases/REPLACE_WITH_TC_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Pass"
+}
+
+###
+
+### Bulk delete test cases
+DELETE {{baseUrl}}/test-cases
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ids": ["id1", "id2"]
+}
+
+###
+
+### Get modules list
+GET {{baseUrl}}/test-cases/meta/modules
+Authorization: Bearer {{token}}
+
+# ──────────────────────────────────────────
+#  BUGS
+# ──────────────────────────────────────────
+
+### Get all bugs
+GET {{baseUrl}}/bugs
+Authorization: Bearer {{token}}
+
+###
+
+### Get open bugs only
+GET {{baseUrl}}/bugs?status=Open
+Authorization: Bearer {{token}}
+
+###
+
+### Get bugs by severity
+GET {{baseUrl}}/bugs?severity=Critical
+Authorization: Bearer {{token}}
+
+###
+
+### Create bug
+POST {{baseUrl}}/bugs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "BUG-NEW: Form submit freezes on slow network",
+  "severity": "Medium",
+  "environment": "Staging",
+  "platform": "Chrome 122 / Windows 11",
+  "steps_to_reproduce": "1. Throttle to Slow 3G\n2. Fill contact form\n3. Click Submit",
+  "actual_result": "Button freezes, no spinner shown, no error",
+  "expected_result": "Loading spinner shown, error if timeout"
+}
+
+###
+
+### Update bug status
+PATCH {{baseUrl}}/bugs/REPLACE_WITH_BUG_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "In Progress",
+  "developer_id": "REPLACE_WITH_DEV_ID"
+}
+
+###
+
+### Delete bug
+DELETE {{baseUrl}}/bugs/REPLACE_WITH_BUG_ID
+Authorization: Bearer {{token}}
+
+# ──────────────────────────────────────────
+#  TESTERS
+# ──────────────────────────────────────────
+
+### Get all testers with stats
+GET {{baseUrl}}/testers
+Authorization: Bearer {{token}}
+
+###
+
+### Add tester
+POST {{baseUrl}}/testers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Kiran Desai",
+  "initials": "KD",
+  "role": "QA Engineer",
+  "avatar_color": "av-cyan",
+  "is_active": true,
+  "email": "kiran@testflow.dev"
+}
+
+###
+
+### Update tester
+PATCH {{baseUrl}}/testers/REPLACE_WITH_TESTER_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "Lead QA",
+  "is_active": true
+}
+
+# ──────────────────────────────────────────
+#  TEST RUNS
+# ──────────────────────────────────────────
+
+### Get all runs
+GET {{baseUrl}}/runs
+Authorization: Bearer {{token}}
+
+###
+
+### Create run
+POST {{baseUrl}}/runs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Sprint 8 — Full Regression",
+  "environment": "Staging",
+  "sprint": "Sprint 8"
+}
+
+# ──────────────────────────────────────────
+#  COMMENTS
+# ──────────────────────────────────────────
+
+### Get comments for a test case
+GET {{baseUrl}}/comments?tc_id=REPLACE_WITH_TC_ID
+Authorization: Bearer {{token}}
+
+###
+
+### Get dev thread
+GET {{baseUrl}}/comments?is_dev_thread=true
+Authorization: Bearer {{token}}
+
+###
+
+### Post comment on test case
+POST {{baseUrl}}/comments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "body": "@DevKumar can you check the staging logs for this?",
+  "tc_id": "REPLACE_WITH_TC_ID"
+}
+
+###
+
+### Post to dev thread
+POST {{baseUrl}}/comments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "body": "All clear on BUG-012 — fix deployed to staging. @Raj please re-run TC-004.",
+  "is_dev_thread": true
+}
+
+# ──────────────────────────────────────────
+#  REPORTS
+# ──────────────────────────────────────────
+
+### Get summary report
+GET {{baseUrl}}/reports/summary
+Authorization: Bearer {{token}}
+
+###
+
+### Get tester performance
+GET {{baseUrl}}/reports/tester-performance
+Authorization: Bearer {{token}}
+
+# ──────────────────────────────────────────
+#  NOTIFICATIONS
+# ──────────────────────────────────────────
+
+### Get all notifications
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{token}}
+
+###
+
+### Mark all as read
+PATCH {{baseUrl}}/notifications/mark-all-read
+Authorization: Bearer {{token}}
+
+# ──────────────────────────────────────────
+#  DEVELOPERS
+# ──────────────────────────────────────────
+
+### Get all developers
+GET {{baseUrl}}/users/developers
+Authorization: Bearer {{token}}
+
+###
+
+### Add developer
+POST {{baseUrl}}/users/developers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Meera Pillai",
+  "initials": "MP",
+  "specialisation": "Mobile",
+  "avatar_color": "av-amber",
+  "email": "meera@company.dev"
+}
+
+###
+
+### Health check
+GET http://localhost:5000/health

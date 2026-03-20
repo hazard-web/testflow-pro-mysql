@@ -1,0 +1,140 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    🚀 QUICK REFERENCE CARD                                 ║
+║              Toast Notifications & Global Search System                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ TOAST NOTIFICATIONS ──────────────────────────────────────────────────────┐
+│                                                                             │
+│ IMPORT:                                                                     │
+│   import { useToast } from '../context/ToastContext';                      │
+│                                                                             │
+│ BASIC USAGE:                                                                │
+│   const { success, error, warning, info } = useToast();                    │
+│                                                                             │
+│ EXAMPLES:                                                                   │
+│   ✅ success('Operation successful!');                                      │
+│   ❌ error('Something went wrong');                                         │
+│   ⚠️  warning('Are you sure? This cannot be undone');                       │
+│   ℹ️  info('Processing your request...');                                   │
+│                                                                             │
+│ CUSTOM DURATION:                                                            │
+│   success('Quick message', 2000);          // 2 seconds                    │
+│   error('Important error', 8000);          // 8 seconds                    │
+│   warning('Confirm action', 0);            // No auto-dismiss              │
+│                                                                             │
+│ WITH EMOJI:                                                                 │
+│   success('🎉 Test case created!');                                        │
+│   error('🔥 Failed to update');                                            │
+│   warning('⚠️  Delete 5 items?');                                           │
+│   info('💬 Comment posted');                                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ GLOBAL SEARCH ────────────────────────────────────────────────────────────┐
+│                                                                             │
+│ OPEN SEARCH:                                                                │
+│   🍎 Mac: Cmd + K                                                          │
+│   🪟 Windows/Linux: Ctrl + K                                               │
+│   🖱️  Or click 🔍 in topbar                                                │
+│                                                                             │
+│ SEARCH ACROSS:                                                              │
+│   🧪 Test Cases                                                            │
+│   🐛 Bugs                                                                  │
+│   📦 Projects                                                              │
+│   👤 Testers                                                               │
+│   👨‍💻 Developers                                                             │
+│                                                                             │
+│ KEYBOARD SHORTCUTS:                                                         │
+│   Cmd/Ctrl + K ......... Open/Close Search                                 │
+│   Esc .................. Close Search                                      │
+│   Enter / Click ........ Select Result                                     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ COMMON API PATTERNS ──────────────────────────────────────────────────────┐
+│                                                                             │
+│ CREATE OPERATION:                                                           │
+│   const { success, error } = useToast();                                   │
+│   try {                                                                     │
+│     await createTestCase(data);                                            │
+│     success('✓ Test case created');                                        │
+│   } catch (err) {                                                          │
+│     error('Failed to create test case');                                   │
+│   }                                                                         │
+│                                                                             │
+│ UPDATE OPERATION:                                                           │
+│   const { success, error } = useToast();                                   │
+│   try {                                                                     │
+│     await updateTestCase(id, data);                                        │
+│     success('✓ Test case updated');                                        │
+│   } catch (err) {                                                          │
+│     error('Failed to update');                                             │
+│   }                                                                         │
+│                                                                             │
+│ DELETE OPERATION:                                                           │
+│   const { success, error } = useToast();                                   │
+│   try {                                                                     │
+│     await deleteTestCase(id);                                              │
+│     success('✓ Test case deleted');                                        │
+│   } catch (err) {                                                          │
+│     error('Cannot delete test case');                                      │
+│   }                                                                         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ BEST PRACTICES ───────────────────────────────────────────────────────────┐
+│                                                                             │
+│ ✨ Always provide feedback                                                 │
+│    Users should know if their action succeeded                            │
+│                                                                             │
+│ 📍 Be specific with error messages                                         │
+│    error('Email is required') ✓                                           │
+│    error('Error') ✗                                                       │
+│                                                                             │
+│ ⏱️  Match duration to message importance                                    │
+│    Quick success: 2-3 seconds                                             │
+│    Normal: 4 seconds (default)                                            │
+│    Errors/Warnings: 5-6 seconds                                           │
+│                                                                             │
+│ 🎨 Use emoji for personality                                              │
+│    success('🎉 Great job!') ✓                                             │
+│    success('Done') ✗                                                      │
+│                                                                             │
+│ ⚠️  For destructive actions use warning with no auto-dismiss               │
+│    warning('Delete? Cannot be undone', 0)                                │
+│                                                                             │
+│ 📍 Keep messages concise                                                   │
+│    error('Test failed') ✓                                                 │
+│    error('The test case execution failed because...') ✗                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FILES TO MODIFY ──────────────────────────────────────────────────────────┐
+│                                                                             │
+│ To add toasts to your features, modify these files:                        │
+│                                                                             │
+│ 📄 src/pages/index.jsx                                                     │
+│    └─ Add toasts to TestCases, Bugs, Projects components                  │
+│                                                                             │
+│ 📄 src/components/Layout.jsx                                               │
+│    └─ Add toasts to profile updates, notifications                        │
+│                                                                             │
+│ 📄 src/pages/Settings.jsx                                                  │
+│    └─ Add toasts to settings changes                                      │
+│                                                                             │
+│ 📄 src/pages/Dashboard.jsx                                                 │
+│    └─ Add toasts to dashboard actions                                     │
+│                                                                             │
+│ See INTEGRATION_POINTS.md for detailed code examples!                     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📚 Documentation Files:
+   • IMPLEMENTATION_SUMMARY.md ... Complete feature overview
+   • TOAST_SEARCH_INTEGRATION.md . How to use in components
+   • INTEGRATION_POINTS.md ....... Where to add toasts
+   • FEATURES_ADDED.txt ......... Detailed feature list
+
+═══════════════════════════════════════════════════════════════════════════════
