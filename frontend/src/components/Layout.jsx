@@ -74,6 +74,12 @@ const NavIcon = ({ path }) => {
         <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.41 1.41M11.37 11.37l1.41 1.41M3.22 12.78l1.41-1.41M11.37 4.63l1.41-1.41" />
       </svg>
     ),
+    logs: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M2 3h12v10H2z" />
+        <path d="M2 6h12M5 9h6M5 12h4" />
+      </svg>
+    ),
   };
   return icons[path] || null;
 };
@@ -115,6 +121,7 @@ export default function Layout() {
       ],
     },
     { section: 'Analytics', items: [{ to: '/reports', label: 'Reports' }] },
+    { section: 'Admin', items: user?.role === 'admin' ? [{ to: '/logs', label: 'Access Logs' }] : [] },
     { section: 'Settings', items: [{ to: '/settings', label: 'Settings' }] },
   ];
 

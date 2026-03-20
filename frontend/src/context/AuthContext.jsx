@@ -12,12 +12,12 @@ export function AuthProvider({ children }) {
     const restoreSession = async () => {
       const accessToken = localStorage.getItem('access_token');
       const refreshToken = localStorage.getItem('refresh_token');
-      
+
       if (!accessToken) {
         setLoading(false);
         return;
       }
-      
+
       try {
         // Try to get current user with existing token
         const res = await api.get('/auth/me');
@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
             const refreshRes = await api.post('/auth/refresh-token', { refreshToken });
             localStorage.setItem('access_token', refreshRes.data.accessToken);
             localStorage.setItem('refresh_token', refreshRes.data.refreshToken);
-            
+
             // Now try to get user again with new token
             const userRes = await api.get('/auth/me');
             setUser(userRes.data.user);
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
         setLoading(false);
       }
     };
-    
+
     restoreSession();
   }, []);
 
@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('access_token', res.data.accessToken);
     localStorage.setItem('refresh_token', res.data.refreshToken);
-    
+
     // Cache non-sensitive user details
     const userData = {
       id: res.data.user.id,
@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
       avatar_color: res.data.user.avatar_color,
     };
     localStorage.setItem('user_cache', JSON.stringify(userData));
-    
+
     setUser(res.data.user);
     return res.data.user;
   };
@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
     const res = await api.post('/auth/register', { name, email, password, team_type: teamType });
     localStorage.setItem('access_token', res.data.accessToken);
     localStorage.setItem('refresh_token', res.data.refreshToken);
-    
+
     // Cache non-sensitive user details
     const userData = {
       id: res.data.user.id,
@@ -86,7 +86,7 @@ export function AuthProvider({ children }) {
       avatar_color: res.data.user.avatar_color,
     };
     localStorage.setItem('user_cache', JSON.stringify(userData));
-    
+
     setUser(res.data.user);
     return res.data.user;
   };

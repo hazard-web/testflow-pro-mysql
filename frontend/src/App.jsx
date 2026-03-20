@@ -17,6 +17,7 @@ import {
   Settings,
   PasswordResetPage,
   SecuritySettingsPage,
+  Logs,
 } from './pages/index';
 
 const PrivateRoute = ({ children }) => {
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="security" element={<SecuritySettingsPage />} />
+          <Route path="logs" element={<Logs />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>

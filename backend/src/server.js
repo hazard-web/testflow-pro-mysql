@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
+const { logActivity } = require('./middleware/logger');
 
 // ── Routes ──
 const authRoutes = require('./routes/auth.routes');
@@ -67,6 +68,9 @@ app.use(
     stream: { write: msg => logger.http(msg.trim()) },
   })
 );
+
+// ── Activity Logging ──
+app.use('/api/', logActivity);
 
 // ── Static uploads ──
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));

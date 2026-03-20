@@ -2406,7 +2406,7 @@ export function Bugs() {
     }
   };
   const allTCs = tcs?.data || [];
-  
+
   // Calculate counts for each tab
   const allBugs = bugs; // Note: useBugs already filters, so we need to fetch all first
   const openCount = allBugs.filter(b => b.status === 'Open').length;
@@ -2414,15 +2414,15 @@ export function Bugs() {
   const resolvedCount = allBugs.filter(b => b.status === 'Resolved').length;
   const closedCount = allBugs.filter(b => b.status === 'Closed').length;
   const totalCount = allBugs.length;
-  
+
   const tabCounts = {
-    'Open': openCount,
+    Open: openCount,
     'In Progress': inProgressCount,
-    'Resolved': resolvedCount,
-    'Closed': closedCount,
-    'all': totalCount,
+    Resolved: resolvedCount,
+    Closed: closedCount,
+    all: totalCount,
   };
-  
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       <div className="topbar" style={{ height: 44, gap: 8 }}>
@@ -4128,3 +4128,8 @@ export { PasswordResetPage } from './PasswordResetPage';
 //  SECURITY SETTINGS PAGE
 // ─────────────────────────────────────────────
 export { SecuritySettingsPage } from './SecuritySettingsPage';
+
+// ─────────────────────────────────────────────
+//  LOGS DASHBOARD
+// ─────────────────────────────────────────────
+export { default as Logs } from './Logs';

@@ -33,7 +33,7 @@ export function useFormCache(formKey, initialState) {
     }
   };
 
-  const updateForm = (updates) => {
+  const updateForm = updates => {
     const newForm = typeof updates === 'function' ? updates(form) : { ...form, ...updates };
     setForm(newForm);
     saveCache(newForm);

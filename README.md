@@ -9,6 +9,7 @@ A comprehensive, production-ready test automation and QA management system built
 ## ✨ Key Features
 
 ### 🎯 Core Testing Features
+
 - **Bug Tracking**: Create, assign, track bugs with severity levels and status management
 - **Test Cases**: Organize and manage test cases with detailed descriptions and attachments
 - **Test Runs**: Execute test cases and track results with real-time updates
@@ -17,6 +18,7 @@ A comprehensive, production-ready test automation and QA management system built
 - **Developer Integration**: Seamless developer-QA communication via team thread
 
 ### 🔒 Security Features
+
 - **Two-Factor Authentication (2FA)**: TOTP-based 2FA with QR code setup
 - **Account Lockout**: Automatic account lockout after 5 failed login attempts (15 min)
 - **Password Reset**: Secure email-based password reset with 30-min expiration
@@ -25,6 +27,7 @@ A comprehensive, production-ready test automation and QA management system built
 - **Session Persistence**: Auto-token refresh across page reloads
 
 ### 🎨 UI/UX Features
+
 - **Professional Dark Theme**: Navy blue (#0a0e27) with cyan accents (#0ea5e9)
 - **Responsive Design**: Mobile-optimized for tablets and phones
 - **Form Caching**: Auto-fill login/signup fields from cached non-sensitive data
@@ -32,6 +35,7 @@ A comprehensive, production-ready test automation and QA management system built
 - **Interactive Dashboard**: Metrics, graphs, and status widgets
 
 ### 🤖 AI Integration
+
 - **AI Test Case Generator**: Powered by Ollama for automatic test case generation
 - **Smart Suggestions**: Get test ideas and edge cases from AI
 
@@ -39,17 +43,17 @@ A comprehensive, production-ready test automation and QA management system built
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| **Frontend** | React 18 + Vite + React Router v7 |
-| **Backend** | Node.js + Express 4 |
-| **Database** | MySQL 8.0 + Knex.js |
-| **Authentication** | JWT + bcryptjs + speakeasy (2FA) |
-| **Styling** | CSS3 with CSS Variables |
-| **Fonts** | Inter (display) + Fira Code (monospace) |
-| **Testing** | Jest + Supertest |
-| **Container** | Docker + Docker Compose |
-| **AI** | Ollama |
+| Component          | Technology                              |
+| ------------------ | --------------------------------------- |
+| **Frontend**       | React 18 + Vite + React Router v7       |
+| **Backend**        | Node.js + Express 4                     |
+| **Database**       | MySQL 8.0 + Knex.js                     |
+| **Authentication** | JWT + bcryptjs + speakeasy (2FA)        |
+| **Styling**        | CSS3 with CSS Variables                 |
+| **Fonts**          | Inter (display) + Fira Code (monospace) |
+| **Testing**        | Jest + Supertest                        |
+| **Container**      | Docker + Docker Compose                 |
+| **AI**             | Ollama                                  |
 
 ---
 
@@ -122,6 +126,7 @@ testflow-pro-mysql/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Node.js** 18+ (16+ minimum)
 - **MySQL** 8.0+ OR Docker
 - **npm** or **yarn**
@@ -130,12 +135,14 @@ testflow-pro-mysql/
 ### Setup (Local Development)
 
 **1. Clone Repository**
+
 ```bash
 git clone https://github.com/yourusername/testflow-pro-mysql.git
 cd testflow-pro-mysql
 ```
 
 **2. Install Dependencies**
+
 ```bash
 npm install
 cd backend && npm install && cd ..
@@ -143,6 +150,7 @@ cd frontend && npm install && cd ..
 ```
 
 **3. Setup Environment**
+
 ```bash
 # Copy environment templates
 cp .env.development .env
@@ -152,6 +160,7 @@ nano .env
 ```
 
 **4. Setup Database**
+
 ```bash
 cd backend
 npm run db:migrate    # Run migrations
@@ -160,6 +169,7 @@ cd ..
 ```
 
 **5. Start Development Servers**
+
 ```bash
 # Terminal 1: Backend API
 cd backend && npm run dev    # Runs on http://localhost:5000
@@ -189,6 +199,7 @@ docker-compose down
 ## 📋 API Documentation
 
 ### Authentication Endpoints
+
 - `POST /api/auth/register` - Create account
 - `POST /api/auth/login` - Login with credentials
 - `GET /api/auth/me` - Get current user (requires token)
@@ -199,18 +210,21 @@ docker-compose down
 - `POST /api/auth/password-reset/confirm` - Confirm new password
 
 ### Bug Management
+
 - `GET /api/bugs` - List bugs (with filters)
 - `POST /api/bugs` - Create bug
 - `PATCH /api/bugs/:id` - Update bug
 - `DELETE /api/bugs/:id` - Delete bug
 
 ### Test Cases
+
 - `GET /api/test-cases` - List test cases
 - `POST /api/test-cases` - Create test case
 - `GET /api/test-cases/:id` - Get test case details
 - `PATCH /api/test-cases/:id` - Update test case
 
 ### Comments & Team Thread
+
 - `GET /api/comments` - List comments
 - `POST /api/comments` - Post comment with @ mentions
 - `DELETE /api/comments/:id` - Delete comment
@@ -222,27 +236,32 @@ docker-compose down
 ## 🔐 Security Highlights
 
 ### Authentication
+
 - JWT tokens with 15-minute expiry
 - Refresh tokens valid for 30 days
 - Automatic token refresh on page reload
 - No session expiration without logout
 
 ### Password Security
+
 - Minimum 8 characters, 1 uppercase, 1 number
 - bcryptjs hashing (salt rounds: 12)
 - Secure password reset via email tokens
 
 ### Account Protection
+
 - Account lockout after 5 failed login attempts
 - 15-minute lockout period
 - Failed login tracking and email notifications
 
 ### Two-Factor Authentication
+
 - TOTP (Time-based One-Time Password)
 - QR code setup with authenticator apps
 - Backup codes for account recovery
 
 ### Audit Trail
+
 - Complete logging of all user actions
 - IP address and user agent tracking
 - Searchable audit logs
@@ -264,15 +283,9 @@ The app uses CSS variables for easy customization:
 
 ```css
 /* Dark Theme (Default) */
---bg: #0a0e27           /* Navy background */
---accent: #0ea5e9       /* Cyan accent */
---text: #f5f5f5         /* Light text */
---border: #1e293b       /* Subtle borders */
-
-/* Fonts */
---font-display: "Inter"      /* Headers */
---font-body: "Inter"         /* Body text */
---font-mono: "Fira Code"     /* Code/monospace */
+--bg: #0a0e27 /* Navy background */ --accent: #0ea5e9 /* Cyan accent */ --text: #f5f5f5
+  /* Light text */ --border: #1e293b /* Subtle borders */ /* Fonts */ --font-display: 'Inter'
+  /* Headers */ --font-body: 'Inter' /* Body text */ --font-mono: 'Fira Code' /* Code/monospace */;
 ```
 
 ---
@@ -280,6 +293,7 @@ The app uses CSS variables for easy customization:
 ## 📊 Database Schema
 
 ### Core Tables
+
 - `users` - User accounts and profiles
 - `bugs` - Bug reports with assignments
 - `test_cases` - Test case definitions
@@ -289,6 +303,7 @@ The app uses CSS variables for easy customization:
 - `audit_logs` - Security audit trail
 
 ### Security Tables
+
 - `two_fa_settings` - 2FA configurations
 - `refresh_tokens` - Active refresh tokens
 - `password_reset_tokens` - Password reset links
@@ -338,6 +353,7 @@ OLLAMA_API_URL=http://localhost:11434
 ## 🚢 Deployment
 
 ### Backend Deployment
+
 ```bash
 # Build
 npm run build
@@ -347,6 +363,7 @@ NODE_ENV=production npm start
 ```
 
 ### Frontend Deployment
+
 ```bash
 # Build static files
 npm run build
@@ -355,6 +372,7 @@ npm run build
 ```
 
 ### Docker Deployment
+
 ```bash
 # Build images
 docker-compose build
@@ -384,6 +402,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 ## 👨‍💻 Author
 
 **Shivam Bhardwaj**
+
 - GitHub: [@shivambhardwaj](https://github.com/shivambhardwaj)
 - Email: shivam@testflow.dev
 
@@ -401,6 +420,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 ## 📞 Support
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
 - Check existing documentation
 - Review API endpoints in `/api.http`
@@ -408,38 +428,45 @@ For issues, questions, or suggestions:
 ---
 
 **Built with ❤️ for QA Teams Worldwide** 🚀
+
 - MySQL 8.0 running locally
 - Redis (optional)
 
 ### 1. Create MySQL database
+
 ```sql
 -- In MySQL Workbench, DBeaver, or mysql CLI:
 CREATE DATABASE testflow_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Configure environment
+
 ```bash
 cp .env.development .env
 # Edit .env — set DB_PASSWORD to your MySQL root/user password
 ```
 
 ### 4. Run migrations + seed
+
 ```bash
 npm run db:migrate    # creates all 9 tables
 npm run db:seed       # inserts sample data
 ```
 
 ### 5. Start dev servers
+
 ```bash
 npm run dev           # backend :5000 + frontend :3000
 ```
 
 Open **http://localhost:3000**
+
 - Email: `admin@testflow.dev`
 - Password: `Password@123`
 
@@ -470,13 +497,13 @@ docker-compose up -d
 
 ## Connecting with MySQL Workbench / DBeaver
 
-| Field    | Value (Docker)   | Value (Local)       |
-|----------|------------------|---------------------|
-| Host     | 127.0.0.1        | 127.0.0.1           |
-| Port     | 3306             | 3306                |
-| Database | testflow_dev     | testflow_dev        |
-| User     | testflow_user    | root                |
-| Password | testflow_pass    | your_root_password  |
+| Field    | Value (Docker) | Value (Local)      |
+| -------- | -------------- | ------------------ |
+| Host     | 127.0.0.1      | 127.0.0.1          |
+| Port     | 3306           | 3306               |
+| Database | testflow_dev   | testflow_dev       |
+| User     | testflow_user  | root               |
+| Password | testflow_pass  | your_root_password |
 
 ---
 
@@ -485,7 +512,7 @@ docker-compose up -d
 ```sql
 users            — VARCHAR(36) UUID PK, auth table
 testers          — QA team members
-developers       — Dev team members  
+developers       — Dev team members
 test_cases       — Steps stored as JSON column
 bugs             — Linked to test_cases + developers via FK
 test_runs        — Sprint test run records
@@ -495,6 +522,7 @@ notifications    — In-app notification feed
 ```
 
 **Key MySQL-specific choices:**
+
 - UUIDs generated at application layer (`uuid` npm package) — no `gen_random_uuid()`
 - `JSON` column type for `steps` (not `jsonb`) — parsed server-side before returning
 - `TINYINT(1)` for booleans — `is_active`, `is_read`, `is_dev_thread`
@@ -506,25 +534,26 @@ notifications    — In-app notification feed
 
 ## MySQL Cloud Hosting Options
 
-| Provider        | Free Tier | Notes                              |
-|-----------------|-----------|------------------------------------|
-| PlanetScale     | ✅ 5GB    | Serverless MySQL, branching        |
-| Railway         | ✅ 1GB    | Easy Docker-like deploys           |
-| AWS RDS MySQL   | ❌        | Most production-ready              |
-| Aiven           | ✅ limited| Managed MySQL                      |
-| TiDB Cloud      | ✅ 5GB    | MySQL-compatible distributed DB    |
+| Provider      | Free Tier  | Notes                           |
+| ------------- | ---------- | ------------------------------- |
+| PlanetScale   | ✅ 5GB     | Serverless MySQL, branching     |
+| Railway       | ✅ 1GB     | Easy Docker-like deploys        |
+| AWS RDS MySQL | ❌         | Most production-ready           |
+| Aiven         | ✅ limited | Managed MySQL                   |
+| TiDB Cloud    | ✅ 5GB     | MySQL-compatible distributed DB |
 
 ---
 
 ## Environments
 
-| File                | DB Name             | Notes                    |
-|---------------------|---------------------|--------------------------|
-| `.env.development`  | `testflow_dev`      | Local MySQL, debug logs  |
-| `.env.staging`      | `testflow_staging`  | SSL, SendGrid, 24h JWT   |
-| `.env.production`   | `testflow_production`| SSL, strict, 8h JWT     |
+| File               | DB Name               | Notes                   |
+| ------------------ | --------------------- | ----------------------- |
+| `.env.development` | `testflow_dev`        | Local MySQL, debug logs |
+| `.env.staging`     | `testflow_staging`    | SSL, SendGrid, 24h JWT  |
+| `.env.production`  | `testflow_production` | SSL, strict, 8h JWT     |
 
 Switch environment:
+
 ```bash
 NODE_ENV=staging npm run start
 NODE_ENV=production npm run start
@@ -552,8 +581,8 @@ NODE_ENV=production npm start
 
 ## Default Login Credentials
 
-| Email                  | Password      | Role     |
-|------------------------|---------------|----------|
-| admin@testflow.dev     | Password@123  | Admin    |
-| anil@testflow.dev      | Password@123  | Lead QA  |
-| priya@testflow.dev     | Password@123  | QA Eng   |
+| Email              | Password     | Role    |
+| ------------------ | ------------ | ------- |
+| admin@testflow.dev | Password@123 | Admin   |
+| anil@testflow.dev  | Password@123 | Lead QA |
+| priya@testflow.dev | Password@123 | QA Eng  |

@@ -173,7 +173,7 @@ export function CommentThread({ comments = [], onPost, loading }) {
   const [cursorPos, setCursorPos] = useState(0);
   const endRef = useRef(null);
   const inputRef = useRef(null);
-  
+
   // Mock registered users - in production, fetch from API
   const registeredUsers = [
     { id: 1, name: 'Alex Kumar', initials: 'AK', role: 'QA' },
@@ -184,25 +184,26 @@ export function CommentThread({ comments = [], onPost, loading }) {
     { id: 6, name: 'Vikram Roy', initials: 'VR', role: 'QA' },
     { id: 7, name: 'Anjali Gupta', initials: 'AG', role: 'Tester' },
   ];
-  
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [comments.length]);
-  
-  const handleTextChange = (e) => {
+
+  const handleTextChange = e => {
     const newText = e.target.value;
     const newPos = e.target.selectionStart;
     setText(newText);
     setCursorPos(newPos);
-    
+
     // Check for @ mention
     const lastAtIndex = newText.lastIndexOf('@', newPos - 1);
     if (lastAtIndex !== -1) {
       const query = newText.substring(lastAtIndex + 1, newPos).trim();
       if (query.length > 0) {
-        const filtered = registeredUsers.filter(u =>
-          u.name.toLowerCase().includes(query.toLowerCase()) ||
-          u.initials.toLowerCase().includes(query.toLowerCase())
+        const filtered = registeredUsers.filter(
+          u =>
+            u.name.toLowerCase().includes(query.toLowerCase()) ||
+            u.initials.toLowerCase().includes(query.toLowerCase())
         );
         setMentions(filtered);
         setShowMentions(true);
@@ -217,8 +218,8 @@ export function CommentThread({ comments = [], onPost, loading }) {
       setMentions([]);
     }
   };
-  
-  const insertMention = (user) => {
+
+  const insertMention = user => {
     const lastAtIndex = text.lastIndexOf('@');
     const beforeAt = text.substring(0, lastAtIndex);
     const afterAt = text.substring(cursorPos);
@@ -227,16 +228,16 @@ export function CommentThread({ comments = [], onPost, loading }) {
     setShowMentions(false);
     inputRef.current?.focus();
   };
-  
+
   const handlePost = () => {
     if (!text.trim()) return;
     onPost(text);
     setText('');
     setShowMentions(false);
   };
-  
+
   const renderBody = t => t.replace(/@(\w+\s?\w+)/g, '<span class="mention">@$1</span>');
-  
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
       <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
@@ -255,13 +256,15 @@ export function CommentThread({ comments = [], onPost, loading }) {
         ))}
         <div ref={endRef} />
       </div>
-      <div style={{ 
-        flexShrink: 0, 
-        borderTop: '1px solid var(--border)', 
-        paddingTop: 12,
-        marginTop: 8,
-        position: 'relative'
-      }}>
+      <div
+        style={{
+          flexShrink: 0,
+          borderTop: '1px solid var(--border)',
+          paddingTop: 12,
+          marginTop: 8,
+          position: 'relative',
+        }}
+      >
         <div className="cmt-in-wrap">
           <textarea
             ref={inputRef}
@@ -276,22 +279,24 @@ export function CommentThread({ comments = [], onPost, loading }) {
               if (e.key === 'Escape') setShowMentions(false);
             }}
           />
-          
+
           {showMentions && mentions.length > 0 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r8)',
-              maxHeight: 200,
-              overflowY: 'auto',
-              zIndex: 1000,
-              marginBottom: 4,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            }}>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r8)',
+                maxHeight: 200,
+                overflowY: 'auto',
+                zIndex: 1000,
+                marginBottom: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              }}
+            >
               {mentions.map(user => (
                 <div
                   key={user.id}
@@ -305,23 +310,21 @@ export function CommentThread({ comments = [], onPost, loading }) {
                     borderBottom: '1px solid var(--border)',
                     transition: 'background var(--transition)',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg3)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <div className="av av-sm av-blue">{user.initials}</div>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
                       {user.name}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--text3)' }}>
-                      {user.role}
-                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text3)' }}>{user.role}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-          
+
           <button
             className="btn btn-sm btn-primary"
             onClick={handlePost}
