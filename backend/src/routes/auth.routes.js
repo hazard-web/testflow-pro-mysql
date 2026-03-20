@@ -123,7 +123,7 @@ router.post(
       .matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
       .withMessage('Password must contain uppercase letter, number, and special character (@$!%*?&)'),
   ],
-  async (req, res, next) => {
+  async (req, res, _next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
@@ -170,9 +170,26 @@ router.post(
         userAgent: req.get('user-agent'),
       });
 
-      res
-        .status(201)
-        .json({ message: 'Registration successful', user: { id: userId, email, name } });
+      // Generate tokens for new user (auto-login after signup)
+      const user = { id: userId, email, name, role: userRole, initials, avatar_color: 'blue' };
+      const accessToken = signAccessToken(user);
+      const refreshToken = signRefreshToken(user);
+
+      // Store refresh token
+      const tokenHash = hashToken(refreshToken);
+      await db('refresh_tokens').insert({
+        id: uuidv4(),
+        user_id: userId,
+        token_hash: tokenHash,
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      });
+
+      res.status(201).json({
+        message: 'Registration successful',
+        user: { id: userId, email, name, role: userRole, initials, avatar_color: 'blue' },
+        accessToken,
+        refreshToken,
+      });
     } catch (error) {
       logger.error('Register error:', error);
       res.status(500).json({ error: error.message });
@@ -186,7 +203,7 @@ router.post(
 router.post(
   '/login',
   [body('email').isEmail().normalizeEmail(), body('password').notEmpty()],
-  async (req, res, next) => {
+  async (req, res, _next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
