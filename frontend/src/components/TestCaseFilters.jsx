@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
-//  Test Case Advanced Filters
+//  Test Case Advanced Filters with Presets
 // ─────────────────────────────────────────────
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './testcase-filters.css';
 
 export function TestCaseFilters({
@@ -12,10 +12,58 @@ export function TestCaseFilters({
   projects = [],
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presets, setPresets] = useState([]);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: filters.startDate || '',
     endDate: filters.endDate || '',
   });
+
+  // Load presets from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('tc_filter_presets');
+    if (saved) {
+      try {
+        setPresets(JSON.parse(saved));
+      } catch (e) {
+        // Handle corrupted data
+      }
+    }
+  }, []);
+
+  const savePreset = () => {
+    if (!presetName.trim()) {
+      alert('Please enter a preset name');
+      return;
+    }
+    const newPreset = {
+      id: Date.now(),
+      name: presetName,
+      filters: { ...filters },
+      createdAt: new Date().toLocaleString(),
+    };
+    const updated = [...presets, newPreset];
+    setPresets(updated);
+    localStorage.setItem('tc_filter_presets', JSON.stringify(updated));
+    setPresetName('');
+    alert(`✓ Preset "${presetName}" saved!`);
+  };
+
+  const loadPreset = (preset) => {
+    onFiltersChange(preset.filters);
+    setDateRange({
+      startDate: preset.filters.startDate || '',
+      endDate: preset.filters.endDate || '',
+    });
+    setShowPresetMenu(false);
+  };
+
+  const deletePreset = (id) => {
+    const updated = presets.filter(p => p.id !== id);
+    setPresets(updated);
+    localStorage.setItem('tc_filter_presets', JSON.stringify(updated));
+  };
 
   const handleFilterChange = (key, value) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -232,14 +280,66 @@ export function TestCaseFilters({
             </div>
           </div>
 
-          {/* Clear Filters Button */}
-          {activeFiltersCount > 0 && (
-            <div className="filter-footer">
+          {/* Preset Controls */}
+          <div className="preset-controls">
+            <div className="preset-input-group">
+              <input
+                type="text"
+                placeholder="Name this filter preset..."
+                value={presetName}
+                onChange={e => setPresetName(e.target.value)}
+                className="preset-input"
+                onKeyPress={e => e.key === 'Enter' && savePreset()}
+              />
+              <button className="preset-save-btn" onClick={savePreset}>
+                💾 Save
+              </button>
+            </div>
+
+            {presets.length > 0 && (
+              <div className="preset-menu-wrapper">
+                <button
+                  className="preset-menu-btn"
+                  onClick={() => setShowPresetMenu(!showPresetMenu)}
+                >
+                  📋 Presets ({presets.length})
+                </button>
+                {showPresetMenu && (
+                  <div className="preset-dropdown">
+                    {presets.map(preset => (
+                      <div key={preset.id} className="preset-item">
+                        <button
+                          className="preset-load-btn"
+                          onClick={() => loadPreset(preset)}
+                        >
+                          {preset.name}
+                        </button>
+                        <button
+                          className="preset-delete-btn"
+                          onClick={() => {
+                            if (confirm(`Delete "${preset.name}"?`)) {
+                              deletePreset(preset.id);
+                            }
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Filter Actions Footer */}
+          <div className="filter-footer">
+            {activeFiltersCount > 0 && (
               <button className="clear-filters-btn" onClick={clearFilters}>
                 ✕ Clear All Filters
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>

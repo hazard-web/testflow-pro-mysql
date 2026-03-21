@@ -366,6 +366,53 @@ router.delete('/', [body('ids').isArray().notEmpty()], async (req, res, next) =>
   }
 });
 
+// PATCH bulk update test cases
+router.patch(
+  '/bulk/update',
+  [
+    body('ids').isArray().notEmpty().withMessage('IDs array required'),
+    body('action').isIn(['status', 'priority', 'tester_id']).withMessage('Invalid action'),
+    body('value').notEmpty().withMessage('Value required'),
+  ],
+  async (req, res, next) => {
+    try {
+      const { ids, action, value } = req.body;
+      
+      // Validate action
+      const validActions = {
+        'status': ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'],
+        'priority': ['Critical', 'High', 'Medium', 'Low'],
+        'tester_id': value, // Any tester ID is valid
+      };
+
+      if (action !== 'tester_id') {
+        if (!validActions[action].includes(value)) {
+          return res.status(400).json({ error: `Invalid ${action} value` });
+        }
+      }
+
+      // Update test cases
+      const updated = await db('test_cases')
+        .whereIn('id', ids)
+        .update({
+          [action]: value,
+          updated_at: new Date(),
+        });
+
+      logger.info(`Bulk updated ${updated} test cases: ${action}=${value}`);
+
+      res.json({
+        message: `${updated} test case(s) updated`,
+        updated,
+        action,
+        value,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // GET modules list
 router.get('/meta/modules', async (req, res, next) => {
   try {

@@ -56,6 +56,7 @@ import {
   AITestCaseGenerator,
 } from '../components/shared'; // eslint-disable-line no-unused-vars
 import { TestCaseFilters } from '../components/TestCaseFilters';
+import { BulkUpdateModal } from '../components/BulkUpdateModal';
 
 // ─────────────────────────────────────────────
 //  LOGIN
@@ -1433,6 +1434,7 @@ export function TestCases() {
   const [selected, setSelected] = useState(new Set());
   const [tcModal, setTCModal] = useState(false);
   const [aiModal, setAIModal] = useState(false);
+  const [bulkModal, setBulkModal] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -1511,6 +1513,22 @@ export function TestCases() {
     }
   };
 
+  const doBulkUpdate = async (action, value) => {
+    try {
+      await api.patch('/test-cases/bulk/update', {
+        ids: [...selected],
+        action,
+        value,
+      });
+      setSelected(new Set());
+      setBulkModal(false);
+      // Refetch data
+      window.location.reload();
+    } catch (err) {
+      throw err;
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       {/* Main topbar */}
@@ -1549,6 +1567,9 @@ export function TestCases() {
               <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
                 {selected.size} selected
               </span>
+              <button className="btn btn-sm btn-primary" onClick={() => setBulkModal(true)}>
+                ⚡ Bulk Update
+              </button>
               <button className="btn btn-sm btn-danger" onClick={() => setConfirmBulk(true)}>
                 Delete
               </button>
@@ -1821,6 +1842,15 @@ export function TestCases() {
           </button>
         </div>
       </Modal>
+
+      {/* Bulk Update Modal */}
+      <BulkUpdateModal
+        open={bulkModal}
+        onClose={() => setBulkModal(false)}
+        selectedCount={selected.size}
+        onConfirm={doBulkUpdate}
+        testers={testers}
+      />
 
       <Confirm
         open={confirmBulk}
