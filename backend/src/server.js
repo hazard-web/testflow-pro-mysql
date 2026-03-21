@@ -25,6 +25,8 @@ const reportRoutes = require('./routes/report.routes');
 const notifRoutes = require('./routes/notification.routes');
 const aiRoutes = require('./routes/ai.routes');
 const auditRoutes = require('./routes/audit.routes');
+const workflowRoutes = require('./routes/workflow.routes');
+const customFieldRoutes = require('./routes/customfield.routes');
 const { projectRouter } = require('./routes/all.routes');
 
 const app = express();
@@ -102,6 +104,8 @@ app.use('/api/notifications', notifRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/projects', projectRouter);
+app.use('/api/workflow', workflowRoutes);
+app.use('/api/custom-fields', customFieldRoutes);
 
 // ── 404 handler ──
 app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.url} not found` }));
