@@ -74,7 +74,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tempTokens, setTempTokens] = useState(null);
-  const appVersion = 'v2.1.0'; // MetricCard bundled correctly
+  const appVersion = 'v2.2.0'; // Railway backend configured
   const submit = async e => {
     e.preventDefault();
     setErr('');
