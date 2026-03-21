@@ -58,7 +58,6 @@ backend/uploads/*
 # ── Production-specific ──
 .vercel/
 .vercel-build-output/
-vercel.json
 VERCEL_DEPLOYMENT.md
 DEPLOYMENT_CHECKLIST.md
 .env.production.example
