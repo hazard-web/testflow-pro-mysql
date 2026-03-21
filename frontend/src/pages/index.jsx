@@ -3960,17 +3960,8 @@ export function Settings() {
     setCreateUserLoading(true);
     setCreateUserMsg(null);
     try {
-      const response = await fetch('/api/auth/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify(createUserForm),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      const response = await api.post('/auth/create-user', createUserForm);
+      const data = response.data;
 
       setCreateUserMsg({
         success: true,
@@ -3981,7 +3972,7 @@ export function Settings() {
     } catch (err) {
       setCreateUserMsg({
         success: false,
-        message: err.message || 'Failed to create user',
+        message: err.response?.data?.error || err.message || 'Failed to create user',
       });
     } finally {
       setCreateUserLoading(false);
