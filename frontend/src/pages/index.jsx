@@ -74,12 +74,12 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tempTokens, setTempTokens] = useState(null);
-  // Metro build timestamp: 2026-03-21T15:30:00Z
-  console.log('Dashboard page loaded - MetricCard should be available');
+  const appVersion = 'v2.1.0'; // MetricCard bundled correctly
   const submit = async e => {
     e.preventDefault();
     setErr('');
     setLoading(true);
+    console.debug('App version:', appVersion);
     try {
       const response = await api.post('/auth/login', form);
       const data = response.data;
