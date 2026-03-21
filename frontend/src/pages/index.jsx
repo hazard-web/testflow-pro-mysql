@@ -568,7 +568,7 @@ export function SignupPage() {
   const [step, setStep] = useState(1);
 
   const validatePassword = pwd => {
-    return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd);
+    return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd) && /[@$!%*?&]/.test(pwd);
   };
 
   const submit = async e => {
@@ -580,7 +580,7 @@ export function SignupPage() {
       return;
     }
     if (!validatePassword(form.password)) {
-      setErr('Password must be at least 8 characters with uppercase & numbers');
+      setErr('Password must be 8+ chars with uppercase, number, and special char (@$!%*?&)');
       return;
     }
     if (form.password !== form.confirmPassword) {
