@@ -19,6 +19,9 @@ build/
 .env.docker.example
 .env.production.example
 .env.*.example
+# EXCEPTION: Allow example files that should be committed
+!.env.*.example
+!frontend/.env.production.example
 
 # ── Logs ──
 logs/
