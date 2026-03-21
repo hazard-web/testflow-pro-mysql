@@ -3,7 +3,11 @@ import toast from 'react-hot-toast';
 
 // Determine API URL based on environment
 const getApiUrl = () => {
-  // If VITE_API_URL is explicitly set, use it
+  // Check for backend URL (production)
+  if (import.meta.env.VITE_BACKEND_URL) {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+  // Check for API URL (fallback)
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
