@@ -159,13 +159,31 @@ export function TestCaseFilters({
 
   return (
     <div className="tc-filters">
+      {/* Filter Header */}
+      <div className="filter-header">
+        <div className="filter-header-left">
+          <h3 className="filter-header-title">🔍 Search & Filter</h3>
+          {activeFiltersCount > 0 && (
+            <span className="active-filters-count">{activeFiltersCount} active</span>
+          )}
+        </div>
+        <button
+          className={`filter-toggle-main ${expanded ? 'active' : ''}`}
+          onClick={() => setExpanded(!expanded)}
+          title={expanded ? 'Collapse filters' : 'Expand filters'}
+        >
+          <span className="toggle-icon">{expanded ? '▼' : '▶'}</span>
+          <span>{expanded ? 'Hide' : 'Show'} All Filters</span>
+        </button>
+      </div>
+
       {/* Search Bar */}
       <div className="filter-row-main">
         <div className="search-wrap-main" style={{ position: 'relative' }}>
-          <span className="search-icon">🔍</span>
+          <span className="search-icon">🔎</span>
           <input
             type="text"
-            placeholder="Search test cases by name, description... (Try: login OR auth AND password)"
+            placeholder="Search by name, description, module... (Use: AND, OR, NOT or quotes)"
             value={filters.search || ''}
             onChange={e => handleSearchChange(e.target.value)}
             className="search-input-main"
@@ -187,16 +205,6 @@ export function TestCaseFilters({
             </div>
           )}
         </div>
-
-        <button
-          className={`filter-toggle ${expanded ? 'active' : ''}`}
-          onClick={() => setExpanded(!expanded)}
-        >
-          <span>⚙️ Filters</span>
-          {activeFiltersCount > 0 && (
-            <span className="filter-badge">{activeFiltersCount}</span>
-          )}
-        </button>
       </div>
 
       {/* Expandable Filters */}
