@@ -1071,56 +1071,65 @@ body {
 
 .badge-pass {
   background: var(--green-dim);
-  color: var(--green);
+  color: #86efac;
   border: 1px solid var(--green-border);
+  font-weight: 800;
 }
 
 .badge-fail {
   background: var(--red-dim);
-  color: var(--red);
+  color: #fca5a5;
   border: 1px solid var(--red-border);
+  font-weight: 800;
 }
 
 .badge-progress {
   background: var(--accent-dim);
-  color: var(--accent);
+  color: #7dd3fc;
   border: 1px solid var(--accent-border);
+  font-weight: 800;
 }
 
 .badge-pending {
   background: rgba(78, 88, 112, 0.15);
-  color: var(--text2);
+  color: #cbd5e1;
   border: 1px solid var(--border2);
+  font-weight: 800;
 }
 
 .badge-blocked {
   background: var(--amber-dim);
-  color: var(--amber);
+  color: #fde047;
   border: 1px solid var(--amber-border);
+  font-weight: 800;
 }
 
 .badge-critical {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ff8888;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  font-weight: 800;
 }
 
 .badge-high {
   background: var(--red-dim);
-  color: var(--red);
+  color: #fca5a5;
   border: 1px solid var(--red-border);
+  font-weight: 800;
 }
 
 .badge-med {
   background: var(--amber-dim);
-  color: var(--amber);
+  color: #fde047;
   border: 1px solid var(--amber-border);
+  font-weight: 800;
 }
 
 .badge-low {
   background: var(--green-dim);
-  color: var(--green);
+  color: #86efac;
   border: 1px solid var(--green-border);
+  font-weight: 800;
 }
 
 /* ── PTAG (pill tag) ── */
@@ -1141,38 +1150,44 @@ body {
 
 .ptag.violet {
   background: var(--violet-dim);
-  color: #c4b5fd;
+  color: #e9d5ff;
   border-color: rgba(124, 58, 237, 0.4);
+  font-weight: 800;
 }
 
 .ptag.green {
   background: var(--green-dim);
-  color: var(--green);
+  color: #86efac;
   border-color: var(--green-border);
+  font-weight: 800;
 }
 
 .ptag.red {
   background: var(--red-dim);
-  color: var(--red);
+  color: #fca5a5;
   border-color: var(--red-border);
+  font-weight: 800;
 }
 
 .ptag.amber {
   background: var(--amber-dim);
-  color: var(--amber);
+  color: #fde047;
   border-color: var(--amber-border);
+  font-weight: 800;
 }
 
 .ptag.cyan {
   background: var(--cyan-dim);
-  color: #22d3ee;
+  color: #67e8f9;
   border-color: rgba(6, 182, 212, 0.4);
+  font-weight: 800;
 }
 
 .ptag.gray {
   background: rgba(78, 88, 112, 0.15);
-  color: var(--text2);
+  color: #cbd5e1;
   border-color: var(--border3);
+  font-weight: 800;
 }
 
 /* ── ISEL ── */
