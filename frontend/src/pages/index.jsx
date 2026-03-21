@@ -41,22 +41,10 @@ import {
   useDeleteProject,
 } from '../hooks/useData';
 import {
-  Badge,
-  Modal,
-  Confirm,
-  Avatar,
-  ProgressBar,
-  MetricCard,
-  StepBuilder,
-  CommentThread,
-  EmptyState,
   exportToCSV,
   moduleColor,
   prioColor,
-  AITestCaseGenerator,
-} from '../components/shared'; // eslint-disable-line no-unused-vars
-import { TestCaseFilters } from '../components/TestCaseFilters';
-import { BulkUpdateModal } from '../components/BulkUpdateModal';
+} from '../components/shared';
 
 // ─────────────────────────────────────────────
 //  LOGIN
@@ -1514,19 +1502,15 @@ export function TestCases() {
   };
 
   const doBulkUpdate = async (action, value) => {
-    try {
-      await api.patch('/test-cases/bulk/update', {
-        ids: [...selected],
-        action,
-        value,
-      });
-      setSelected(new Set());
-      setBulkModal(false);
-      // Refetch data
-      window.location.reload();
-    } catch (err) {
-      throw err;
-    }
+    await api.patch('/test-cases/bulk/update', {
+      ids: [...selected],
+      action,
+      value,
+    });
+    setSelected(new Set());
+    setBulkModal(false);
+    // Refetch data
+    window.location.reload();
   };
 
   return (
@@ -3945,7 +3929,6 @@ export function Settings() {
     confirmPassword: '',
   });
   const [passErr, setPassErr] = useState('');
-  const [createUserModal, setCreateUserModal] = useState(false);
   const [createUserForm, setCreateUserForm] = useState({
     name: '',
     email: '',
