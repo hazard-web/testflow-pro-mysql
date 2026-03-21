@@ -15,53 +15,53 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 function drawTable(doc, title, headers, rows, startX = 50, startY = null) {
   const colWidth = 150;
   const rowHeight = 25;
-  
+
   if (startY) doc.y = startY;
-  
+
   // Draw title
   doc.fontSize(12).font('Helvetica-Bold').text(title);
   doc.moveDown(0.5);
-  
+
   const tableStartY = doc.y;
   const tableStartX = startX;
-  
+
   // Draw header
   let x = tableStartX;
   doc.fontSize(10).font('Helvetica-Bold');
   doc.fillColor('#5b8dee');
   doc.rect(x, doc.y, colWidth * headers.length, rowHeight).fill();
-  
+
   doc.fillColor('#FFFFFF');
   headers.forEach((header, i) => {
     doc.text(header, x + 10, doc.y - rowHeight + 8, { width: colWidth - 20 });
     x += colWidth;
   });
-  
+
   // Draw rows
   doc.moveDown();
   doc.fillColor('#333333');
   doc.font('Helvetica');
-  
+
   rows.forEach((row, rowIndex) => {
     x = tableStartX;
     const rowY = doc.y;
-    
+
     // Alternate row background
     if (rowIndex % 2 === 0) {
       doc.fillColor('#f5f5f5');
       doc.rect(x, rowY, colWidth * headers.length, rowHeight).fill();
       doc.fillColor('#333333');
     }
-    
+
     doc.fontSize(9);
     row.forEach((cell, colIndex) => {
       doc.text(cell.toString(), x + 10, rowY + 8, { width: colWidth - 20 });
       x += colWidth;
     });
-    
+
     doc.moveDown(1.5);
   });
-  
+
   doc.moveDown(0.5);
 }
 
@@ -69,31 +69,31 @@ function drawTable(doc, title, headers, rows, startX = 50, startY = null) {
 function drawBarChart(doc, title, data) {
   doc.fontSize(12).font('Helvetica-Bold').text(title);
   doc.moveDown(0.3);
-  
+
   const maxValue = Math.max(...data.map(d => d.count));
   const maxWidth = 300;
   const barHeight = 20;
-  
+
   data.forEach((item, index) => {
     const label = item.status || item.priority || item.severity || 'Other';
     const barWidth = (item.count / maxValue) * maxWidth;
     const y = doc.y;
-    
+
     // Draw label
     doc.fontSize(10).font('Helvetica').fillColor('#333');
     doc.text(`${label}:`, 50, y, { width: 80 });
-    
+
     // Draw bar
     doc.fillColor('#45B7D1');
     doc.rect(130, y + 5, barWidth, barHeight).fill();
-    
+
     // Draw value
     doc.fillColor('#333');
     doc.text(item.count.toString(), 130 + barWidth + 10, y);
-    
+
     doc.moveDown(1.5);
   });
-  
+
   doc.moveDown(0.5);
 }
 
@@ -505,31 +505,37 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
     if (format === 'pdf') {
       // Generate PDF with tables and charts
       const doc = new PDFDocument({ size: 'A4', margins: 30 });
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename=testflow-report.pdf');
-      
+
       doc.pipe(res);
 
       // Title Page
       doc.fontSize(28).font('Helvetica-Bold').text('TestFlow Pro', { align: 'center' });
       doc.fontSize(20).text('Comprehensive Test Report', { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).font('Helvetica').text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc
+        .fontSize(12)
+        .font('Helvetica')
+        .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
       doc.text(`Project ID: ${projectId}`, { align: 'center' });
       doc.moveDown();
 
       // Summary Section
       doc.fontSize(16).font('Helvetica-Bold').text('Executive Summary', { underline: true });
       doc.moveDown(0.5);
-      
+
       doc.fontSize(11).font('Helvetica');
-      const passRate = report.summary.totalTestCases > 0 
-        ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100) 
-        : 0;
-      
+      const passRate =
+        report.summary.totalTestCases > 0
+          ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100)
+          : 0;
+
       doc.text(`Total Test Cases: ${report.summary.totalTestCases}`, { color: '#333' });
-      doc.text(`Passed: ${report.summary.passedTests} (${passRate}%)`, { color: passRate >= 80 ? '#10b981' : '#ef4444' });
+      doc.text(`Passed: ${report.summary.passedTests} (${passRate}%)`, {
+        color: passRate >= 80 ? '#10b981' : '#ef4444',
+      });
       doc.text(`Failed: ${report.summary.failedTests}`, { color: '#ef4444' });
       doc.text(`Blocked: ${report.summary.blockedTests}`, { color: '#f59e0b' });
       doc.text(`Open Bugs: ${report.summary.openBugs}`, { color: '#ef4444' });
@@ -566,23 +572,28 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
       doc.addPage();
       doc.fontSize(16).font('Helvetica-Bold').text('Summary Metrics', { underline: true });
       doc.moveDown(0.5);
-      
-      drawTable(doc, 'Key Metrics', ['Metric', 'Value'], [
-        ['Total Test Cases', report.summary.totalTestCases],
-        ['Passed Tests', report.summary.passedTests],
-        ['Failed Tests', report.summary.failedTests],
-        ['Blocked Tests', report.summary.blockedTests],
-        ['Pass Rate', `${passRate}%`],
-        ['Open Bugs', report.summary.openBugs],
-        ['Resolved Bugs', report.summary.resolvedBugs],
-        ['Total Bugs', report.summary.totalBugs],
-      ]);
+
+      drawTable(
+        doc,
+        'Key Metrics',
+        ['Metric', 'Value'],
+        [
+          ['Total Test Cases', report.summary.totalTestCases],
+          ['Passed Tests', report.summary.passedTests],
+          ['Failed Tests', report.summary.failedTests],
+          ['Blocked Tests', report.summary.blockedTests],
+          ['Pass Rate', `${passRate}%`],
+          ['Open Bugs', report.summary.openBugs],
+          ['Resolved Bugs', report.summary.resolvedBugs],
+          ['Total Bugs', report.summary.totalBugs],
+        ]
+      );
 
       doc.end();
     } else if (format === 'csv') {
       // Generate Professional CSV with enhanced formatting
       let csv = '';
-      
+
       // Header
       csv += 'TESTFLOW PRO - COMPREHENSIVE TEST REPORT\n';
       csv += '===========================================\n\n';
@@ -591,15 +602,18 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
       csv += `Report Type: Comprehensive Analysis\n\n`;
 
       // Calculate metrics
-      const passRate = report.summary.totalTestCases > 0 
-        ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100)
-        : 0;
-      const failRate = report.summary.totalTestCases > 0
-        ? Math.round((report.summary.failedTests / report.summary.totalTestCases) * 100)
-        : 0;
-      const bugResolutionRate = report.summary.totalBugs > 0
-        ? Math.round((report.summary.resolvedBugs / report.summary.totalBugs) * 100)
-        : 0;
+      const passRate =
+        report.summary.totalTestCases > 0
+          ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100)
+          : 0;
+      const failRate =
+        report.summary.totalTestCases > 0
+          ? Math.round((report.summary.failedTests / report.summary.totalTestCases) * 100)
+          : 0;
+      const bugResolutionRate =
+        report.summary.totalBugs > 0
+          ? Math.round((report.summary.resolvedBugs / report.summary.totalBugs) * 100)
+          : 0;
 
       // EXECUTIVE SUMMARY
       csv += 'EXECUTIVE SUMMARY\n';
@@ -619,9 +633,10 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
       csv += '=============================\n';
       csv += 'Status,Count,Percentage\n';
       report.breakdown.byStatus.forEach(s => {
-        const pct = report.summary.totalTestCases > 0 
-          ? Math.round((s.count / report.summary.totalTestCases) * 100)
-          : 0;
+        const pct =
+          report.summary.totalTestCases > 0
+            ? Math.round((s.count / report.summary.totalTestCases) * 100)
+            : 0;
         csv += `${s.status},${s.count},${pct}%\n`;
       });
       csv += `TOTAL,${report.summary.totalTestCases},100%\n\n`;
@@ -631,9 +646,10 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
       csv += '===============================\n';
       csv += 'Priority,Count,Percentage\n';
       report.breakdown.byPriority.forEach(p => {
-        const pct = report.summary.totalTestCases > 0
-          ? Math.round((p.count / report.summary.totalTestCases) * 100)
-          : 0;
+        const pct =
+          report.summary.totalTestCases > 0
+            ? Math.round((p.count / report.summary.totalTestCases) * 100)
+            : 0;
         csv += `${p.priority},${p.count},${pct}%\n`;
       });
       csv += `TOTAL,${report.summary.totalTestCases},100%\n\n`;
@@ -643,9 +659,8 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
       csv += '=============\n';
       csv += 'Metric,Count,Percentage,Priority\n';
       report.breakdown.bugsBySeverity.forEach(s => {
-        const pct = report.summary.totalBugs > 0
-          ? Math.round((s.count / report.summary.totalBugs) * 100)
-          : 0;
+        const pct =
+          report.summary.totalBugs > 0 ? Math.round((s.count / report.summary.totalBugs) * 100) : 0;
         const priority = s.severity === 'Critical' || s.severity === 'High' ? 'URGENT' : 'NORMAL';
         csv += `${s.severity} Severity,${s.count},${pct}%,${priority}\n`;
       });
@@ -656,9 +671,8 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
       csv += '=======================\n';
       csv += 'Status,Count,Percentage\n';
       report.breakdown.bugsByStatus.forEach(s => {
-        const pct = report.summary.totalBugs > 0
-          ? Math.round((s.count / report.summary.totalBugs) * 100)
-          : 0;
+        const pct =
+          report.summary.totalBugs > 0 ? Math.round((s.count / report.summary.totalBugs) * 100) : 0;
         csv += `${s.status},${s.count},${pct}%\n`;
       });
       csv += `TOTAL,${report.summary.totalBugs},100%\n\n`;

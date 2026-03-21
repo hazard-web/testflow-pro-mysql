@@ -322,12 +322,12 @@ router.get('/me', authenticate, async (req, res) => {
     });
   } catch (error) {
     logger.error('Get user error:', error);
-    
+
     // Return 503 for timeout/connection issues
     if (error.message === 'Database query timeout' || error.code === 'ETIMEDOUT') {
       return res.status(503).json({ error: 'Service temporarily unavailable' });
     }
-    
+
     res.status(500).json({ error: error.message });
   }
 });

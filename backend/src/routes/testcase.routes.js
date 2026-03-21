@@ -60,7 +60,10 @@ router.get('/', async (req, res, next) => {
     if (project_id) qry = qry.where('tc.project_id', project_id);
     if (environment) qry = qry.where('tc.environment', environment);
     if (type) qry = qry.where('tc.type', type);
-    if (search) qry = qry.where('tc.title', 'like', `%${search}%`).orWhere('tc.description', 'like', `%${search}%`);
+    if (search)
+      qry = qry
+        .where('tc.title', 'like', `%${search}%`)
+        .orWhere('tc.description', 'like', `%${search}%`);
     if (startDate) qry = qry.whereDate('tc.created_at', '>=', startDate);
     if (endDate) qry = qry.whereDate('tc.created_at', '<=', endDate);
 
@@ -72,7 +75,10 @@ router.get('/', async (req, res, next) => {
     if (project_id) countQry = countQry.where('project_id', project_id);
     if (environment) countQry = countQry.where('environment', environment);
     if (type) countQry = countQry.where('type', type);
-    if (search) countQry = countQry.where('title', 'like', `%${search}%`).orWhere('description', 'like', `%${search}%`);
+    if (search)
+      countQry = countQry
+        .where('title', 'like', `%${search}%`)
+        .orWhere('description', 'like', `%${search}%`);
     if (startDate) countQry = countQry.whereDate('created_at', '>=', startDate);
     if (endDate) countQry = countQry.whereDate('created_at', '<=', endDate);
     const total = await countQry.count('id as count').first();
@@ -377,12 +383,12 @@ router.patch(
   async (req, res, next) => {
     try {
       const { ids, action, value } = req.body;
-      
+
       // Validate action
       const validActions = {
-        'status': ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'],
-        'priority': ['Critical', 'High', 'Medium', 'Low'],
-        'tester_id': value, // Any tester ID is valid
+        status: ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'],
+        priority: ['Critical', 'High', 'Medium', 'Low'],
+        tester_id: value, // Any tester ID is valid
       };
 
       if (action !== 'tester_id') {

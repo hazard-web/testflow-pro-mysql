@@ -45,6 +45,7 @@
   color: var(--text3);
   flex-shrink: 0;
   opacity: 0.8;
+  margin-right: 4px;
 }
 
 .search-input-inline {
@@ -56,6 +57,7 @@
   color: var(--text);
   font-family: var(--font-body);
   min-width: 150px;
+  padding: 0 4px 0 0;
 }
 
 .search-input-inline::placeholder {

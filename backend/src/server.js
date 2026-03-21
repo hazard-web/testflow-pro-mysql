@@ -99,9 +99,9 @@ app.get('/health/deep', async (req, res) => {
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Database timeout')), 3000)
     );
-    
+
     await Promise.race([dbCheck, timeoutPromise]);
-    
+
     res.json({
       status: 'healthy',
       database: 'connected',
