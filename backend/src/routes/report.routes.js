@@ -97,9 +97,6 @@ function drawBarChart(doc, title, data) {
   doc.moveDown(0.5);
 }
 
-// Helper to cache reports
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
 // ─────────────────────────────────────────────
 // LEGACY ROUTES (from all.routes.js)
 // ─────────────────────────────────────────────
