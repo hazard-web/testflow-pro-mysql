@@ -1,7 +1,8 @@
 // ─────────────────────────────────────────────
-//  Test Case Advanced Filters with Presets
+//  Test Case Advanced Filters with Presets & Suggestions
 // ─────────────────────────────────────────────
 import { useState, useEffect } from 'react';
+import { trackFilterHistory, getAutocompleteSuggestions } from '../utils/searchParser';
 import './testcase-filters.css';
 
 export function TestCaseFilters({
@@ -15,6 +16,8 @@ export function TestCaseFilters({
   const [presetName, setPresetName] = useState('');
   const [presets, setPresets] = useState([]);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
   const [dateRange, setDateRange] = useState({
     startDate: filters.startDate || '',
     endDate: filters.endDate || '',
@@ -31,6 +34,14 @@ export function TestCaseFilters({
       }
     }
   }, []);
+
+  // Track filter history when filters change
+  useEffect(() => {
+    const hasActiveFilters = Object.values(filters).some(v => v);
+    if (hasActiveFilters) {
+      trackFilterHistory(filters);
+    }
+  }, [filters]);
 
   const savePreset = () => {
     if (!presetName.trim()) {
@@ -63,6 +74,44 @@ export function TestCaseFilters({
     const updated = presets.filter(p => p.id !== id);
     setPresets(updated);
     localStorage.setItem('tc_filter_presets', JSON.stringify(updated));
+  };
+
+  const handleSearchChange = (value) => {
+    onFiltersChange({ ...filters, search: value });
+    
+    // Show suggestions if input is long enough
+    if (value.length > 2) {
+      const sug = getAutocompleteSuggestions(value, { modules, testers, projects });
+      setSuggestions(sug);
+      setShowSuggestions(sug.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const applySuggestion = (suggestion) => {
+    let newFilters = { ...filters };
+    
+    switch (suggestion.type) {
+      case 'module':
+        newFilters.module = suggestion.value;
+        break;
+      case 'project':
+        newFilters.project_id = suggestion.id;
+        break;
+      case 'tester':
+        newFilters.tester_id = suggestion.id;
+        break;
+      case 'status':
+        newFilters.status = suggestion.value;
+        break;
+      default:
+        break;
+    }
+    
+    onFiltersChange(newFilters);
+    setShowSuggestions(false);
+    setSuggestions([]);
   };
 
   const handleFilterChange = (key, value) => {
@@ -112,15 +161,31 @@ export function TestCaseFilters({
     <div className="tc-filters">
       {/* Search Bar */}
       <div className="filter-row-main">
-        <div className="search-wrap-main">
+        <div className="search-wrap-main" style={{ position: 'relative' }}>
           <span className="search-icon">🔍</span>
           <input
             type="text"
-            placeholder="Search test cases by name, description..."
+            placeholder="Search test cases by name, description... (Try: login OR auth AND password)"
             value={filters.search || ''}
-            onChange={e => handleFilterChange('search', e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
             className="search-input-main"
           />
+          
+          {/* Search Suggestions Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="search-suggestions">
+              {suggestions.map((sug, i) => (
+                <button
+                  key={i}
+                  className="suggestion-item"
+                  onClick={() => applySuggestion(sug)}
+                >
+                  <span className="suggestion-type">{sug.type}</span>
+                  <span className="suggestion-value">{sug.value}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <button
