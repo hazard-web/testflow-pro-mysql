@@ -40,11 +40,7 @@ import {
   useUpdateProject,
   useDeleteProject,
 } from '../hooks/useData';
-import {
-  exportToCSV,
-  moduleColor,
-  prioColor,
-} from '../components/shared';
+import { exportToCSV, moduleColor, prioColor } from '../components/shared';
 
 // ─────────────────────────────────────────────
 //  LOGIN
