@@ -85,6 +85,16 @@
   cursor: not-allowed;
 }
 
+.export-btn.pdf {
+  border-color: #e63946;
+  color: #e63946;
+}
+
+.export-btn.pdf:hover:not(:disabled) {
+  background: #ffe5e5;
+  border-color: #d62828;
+}
+
 .export-btn.csv {
   border-color: #10b981;
   color: #10b981;

@@ -164,6 +164,15 @@ export default function Reports({ projectId }) {
         link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         window.URL.revokeObjectURL(url);
+      } else if (format === 'pdf') {
+        // Handle PDF export
+        const blob = new Blob([response], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
       } else {
         // Handle JSON export
         const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
@@ -210,6 +219,14 @@ export default function Reports({ projectId }) {
             </button>
           </div>
           <div className="export-buttons">
+            <button
+              className="export-btn pdf"
+              onClick={() => handleExport('pdf')}
+              disabled={exporting}
+              title="Export as PDF with charts"
+            >
+              {exporting ? '⏳ Exporting...' : '📄 PDF'}
+            </button>
             <button
               className="export-btn csv"
               onClick={() => handleExport('csv')}
