@@ -15,7 +15,9 @@ Successfully implemented **Phase 1 enhancements** for TestFlow Pro QA platform w
 ### New Tables Created
 
 #### `workflow_states` table
+
 Stores workflow state definitions for each project
+
 - `id` (string, PK) - Unique identifier
 - `project_id` (string, FK) - Associated project
 - `name` (string) - State name (e.g., "In Review")
@@ -26,7 +28,9 @@ Stores workflow state definitions for each project
 - `timestamps` - Created/Updated timestamps
 
 #### `testcase_workflow_history` table
+
 Tracks all state transitions for audit trail
+
 - `id` (string, PK)
 - `tc_id` (string, FK) - Test case reference
 - `from_state` (string) - Previous state
@@ -36,7 +40,9 @@ Tracks all state transitions for audit trail
 - `timestamps`
 
 #### `custom_fields` table
+
 Defines custom fields available for a project
+
 - `id` (string, PK)
 - `project_id` (string, FK) - Associated project
 - `field_name` (string) - Display name
@@ -48,7 +54,9 @@ Defines custom fields available for a project
 - `timestamps`
 
 #### `custom_field_values` table
+
 Stores custom field values for each test case
+
 - `id` (string, PK)
 - `tc_id` (string, FK) - Test case reference
 - `field_id` (string, FK) - Custom field reference
@@ -56,7 +64,9 @@ Stores custom field values for each test case
 - `timestamps`
 
 #### `reports` table
+
 Cache for generated reports
+
 - `id` (string, PK)
 - `project_id` (string, FK) - Associated project
 - `name` (string) - Report name
@@ -69,6 +79,7 @@ Cache for generated reports
 ### Schema Modifications
 
 Updated `test_cases` table to include:
+
 - `workflow_state` (string) - Current workflow state
 
 ---
@@ -165,9 +176,11 @@ GET    /reports/get/:reportId
 ## Frontend Components
 
 ### Reports Component (`Reports.jsx`)
+
 **Location:** `src/components/Reports.jsx`
 
 Features:
+
 - 📊 Tabbed interface (Overview, Bugs, Coverage)
 - 📈 Built-in Charts library
   - `PieChart` - Visual percentage breakdown
@@ -176,6 +189,7 @@ Features:
 - Real-time data fetching with error handling
 
 **Usage:**
+
 ```jsx
 <Reports projectId={projectId} />
 ```
@@ -183,9 +197,11 @@ Features:
 **Styling:** `src/styles/reports.css`
 
 ### WorkflowManager Component (`WorkflowManager.jsx`)
+
 **Location:** `src/components/WorkflowManager.jsx`
 
 Features:
+
 - 🔄 Create workflow states per project
 - ✏️ Edit state properties (name, color, order)
 - 🗑️ Delete states (with cascade check)
@@ -194,9 +210,10 @@ Features:
 - 📜 Visual state cards with color indicators
 
 **Usage:**
+
 ```jsx
-<WorkflowManager 
-  projectId={projectId} 
+<WorkflowManager
+  projectId={projectId}
   testcaseId={testcaseId}
   currentState={currentState}
   onStateChange={(newState) => {...}}
@@ -206,9 +223,11 @@ Features:
 **Styling:** `src/styles/workflow.css`
 
 ### CustomFieldsManager Component (`CustomFieldsManager.jsx`)
+
 **Location:** `src/components/CustomFieldsManager.jsx`
 
 Features:
+
 - ➕ Create 6 field types: text, select, multiselect, number, date, checkbox
 - 📋 Field configuration: name, type, required, help text
 - ✏️ Edit field values per test case
@@ -217,9 +236,10 @@ Features:
 - 🔐 Required field indicators
 
 **Usage:**
+
 ```jsx
-<CustomFieldsManager 
-  projectId={projectId} 
+<CustomFieldsManager
+  projectId={projectId}
   testcaseId={testcaseId}
   onFieldsChange={() => {...}}
 />
@@ -232,20 +252,26 @@ Features:
 ## Testing & Validation
 
 ### Database Migration
+
 ✅ Tested with `npm run db:reset`:
+
 - All 5 new tables created successfully
 - Existing tables preserved
 - Seeding completed (3 users, 5 testers, 3 projects, etc.)
 
 ### Code Validation
+
 ✅ Node.js syntax validation:
+
 - `server.js` - ✅ Valid
 - `report.routes.js` - ✅ Valid
 - `workflow.routes.js` - ✅ Valid
 - `customfield.routes.js` - ✅ Valid
 
 ### Git Deployment
+
 ✅ Pushed to GitHub:
+
 - Commit: `feat: Add custom fields, workflow states, and reporting features`
 - Branch: `main` → GitHub
 - Sync: `main:production` (force-synced)
@@ -255,20 +281,45 @@ Features:
 ## Deployment Status
 
 ### Current Environment
+
 - **Frontend:** Vercel (main branch)
 - **Backend:** Railway (production branch)
 - **Database:** Railway MySQL
 - **Status:** ✅ Code committed and ready
 
 ### Next Steps for Production
+
 1. Vercel will auto-deploy frontend from `main` branch
 2. Railway will auto-deploy backend from `production` branch
 3. Database migrations will run automatically on Railway backend start
 4. **Note:** Run `npm run db:reset` on Railway if fresh migration needed
 
 ### Production URLs
-- Frontend: https://testflow-pro-mysql-frontend-r3u3.vercel.app
-- Backend: https://prolific-mercy-production.up.railway.app
+
+- **Frontend:** https://testflow-pro-mysql-frontend-r3u3.vercel.app
+- **Backend API:** https://prolific-mercy-production.up.railway.app/api
+- **Health Check:** https://prolific-mercy-production.up.railway.app/health
+
+### Production Environment Details
+
+**Frontend (Vercel):**
+- Auto-deploys from `main` branch
+- Environment: Production
+- Region: Edge Network (global)
+- Status: ✅ Live
+
+**Backend (Railway):**
+- Auto-deploys from `production` branch
+- Environment: Production
+- Database: Railway MySQL (auto-migrated)
+- JWT Secret: Configured in Railway environment
+- Status: ✅ Live
+
+**Database (Railway MySQL):**
+- 20 tables created (15 existing + 5 new)
+- All migrations auto-run on backend startup
+- Backup: Railway automatic daily backups
+- Status: ✅ Live with all Phase 1 tables
 
 ---
 
@@ -277,10 +328,12 @@ Features:
 All endpoints require `Authorization: Bearer <JWT_TOKEN>` header
 
 **Admin-only operations:**
+
 - Create/update/delete workflow states
 - Create/update/delete custom fields
 
 **User operations:**
+
 - View reports
 - Transition test case states
 - Edit custom field values
@@ -289,21 +342,22 @@ All endpoints require `Authorization: Bearer <JWT_TOKEN>` header
 
 ## Implementation Statistics
 
-| Component | Status | Lines | Files |
-|-----------|--------|-------|-------|
-| Database Migrations | ✅ | 150 | 1 |
-| Workflow API | ✅ | 180 | 1 |
-| Custom Fields API | ✅ | 200 | 1 |
-| Reporting API | ✅ | 250 | 1 |
-| Frontend Components | ✅ | 450 | 3 |
-| Styling | ✅ | 350 | 3 |
-| **Total** | ✅ | **1,580** | **10** |
+| Component           | Status | Lines     | Files  |
+| ------------------- | ------ | --------- | ------ |
+| Database Migrations | ✅     | 150       | 1      |
+| Workflow API        | ✅     | 180       | 1      |
+| Custom Fields API   | ✅     | 200       | 1      |
+| Reporting API       | ✅     | 250       | 1      |
+| Frontend Components | ✅     | 450       | 3      |
+| Styling             | ✅     | 350       | 3      |
+| **Total**           | ✅     | **1,580** | **10** |
 
 ---
 
 ## Key Features Summary
 
 ### 🎯 Workflow States
+
 - Create project-specific workflow states
 - Track state transitions with audit trail
 - Assign default and final states
@@ -311,6 +365,7 @@ All endpoints require `Authorization: Bearer <JWT_TOKEN>` header
 - Prevent deletion if states are in use
 
 ### 📝 Custom Fields
+
 - 6 field types: Text, Select, Multi-select, Number, Date, Checkbox
 - Per-project field definitions
 - Required field validation
@@ -319,6 +374,7 @@ All endpoints require `Authorization: Bearer <JWT_TOKEN>` header
 - JSON value storage for flexibility
 
 ### 📊 Reporting
+
 - Test case metrics (status, priority, type, environment)
 - Bug analysis (severity, status)
 - Execution trends (30-day history)
@@ -332,6 +388,7 @@ All endpoints require `Authorization: Bearer <JWT_TOKEN>` header
 ## Configuration Notes
 
 ### Environment Variables (already set on Railway)
+
 ```
 JWT_SECRET=<your-secret>
 CLIENT_URL=https://testflow-pro-mysql-frontend-r3u3.vercel.app
@@ -342,6 +399,7 @@ DB_USER=root
 ```
 
 ### Local Development
+
 ```bash
 # Reset and seed database
 npm run db:reset
@@ -358,6 +416,7 @@ cd frontend && npm run dev
 ## Support
 
 For issues or questions about these features:
+
 1. Check GitHub Issues: https://github.com/hazard-web/testflow-pro-mysql/issues
 2. Review API documentation in route files
 3. Check React component prop interfaces
