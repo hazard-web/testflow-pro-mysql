@@ -55,6 +55,7 @@ import {
   prioColor,
   AITestCaseGenerator,
 } from '../components/shared'; // eslint-disable-line no-unused-vars
+import { TestCaseFilters } from '../components/TestCaseFilters';
 
 // ─────────────────────────────────────────────
 //  LOGIN
@@ -1417,9 +1418,18 @@ export function Dashboard() {
 export function TestCases() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('all');
-  const [search, setSearch] = useState('');
-  const [modFilter, setModFilter] = useState('');
-  const [prioFilter, setPrioFilter] = useState('');
+  const [advancedFilters, setAdvancedFilters] = useState({
+    search: '',
+    status: '',
+    priority: '',
+    module: '',
+    tester_id: '',
+    project_id: '',
+    environment: '',
+    type: '',
+    startDate: '',
+    endDate: '',
+  });
   const [selected, setSelected] = useState(new Set());
   const [tcModal, setTCModal] = useState(false);
   const [aiModal, setAIModal] = useState(false);
@@ -1439,9 +1449,7 @@ export function TestCases() {
   const filters = {
     limit: 200,
     ...(tab !== 'all' && { status: tab }),
-    ...(search && { search }),
-    ...(modFilter && { module: modFilter }),
-    ...(prioFilter && { priority: prioFilter }),
+    ...Object.fromEntries(Object.entries(advancedFilters).filter(([, v]) => v)),
   };
   const { data, isLoading } = useTestCases(filters);
   const { data: allTCData } = useTestCases({ limit: 200 });
@@ -1523,31 +1531,18 @@ export function TestCases() {
           </div>
         </div>
       </div>
-      {/* Sub-topbar */}
+
+      {/* Advanced Filters Component */}
+      <TestCaseFilters
+        filters={advancedFilters}
+        onFiltersChange={setAdvancedFilters}
+        modules={modules}
+        testers={testers}
+        projects={projects}
+      />
+
+      {/* Action Bar */}
       <div className="topbar" style={{ height: 44, gap: 8 }}>
-        <div className="topbar-l" style={{ gap: 8, flex: 1 }}>
-          <div className="search-wrap" style={{ maxWidth: 200 }}>
-            <span className="search-icon">⌕</span>
-            <input
-              type="text"
-              placeholder="Filter test cases…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <select className="isel" value={modFilter} onChange={e => setModFilter(e.target.value)}>
-            <option value="">All Modules</option>
-            {modules.map(m => (
-              <option key={m}>{m}</option>
-            ))}
-          </select>
-          <select className="isel" value={prioFilter} onChange={e => setPrioFilter(e.target.value)}>
-            <option value="">All Priority</option>
-            {['Critical', 'High', 'Medium', 'Low'].map(p => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-        </div>
         <div className="topbar-r" style={{ gap: 6 }}>
           {selected.size > 0 && (
             <>
