@@ -70,7 +70,7 @@ export function LoginPage() {
       const data = response.data;
 
       // Check if 2FA is required
-      if (data.requiresTwoFA) {
+      if (data.requiresAuth) {
         setTempTokens(data.tempToken);
         setStep('2fa');
       } else {
