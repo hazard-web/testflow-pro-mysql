@@ -249,50 +249,187 @@ export default function Reports({ projectId }) {
 
       <div className="reports-content">
         {activeTab === 'overview' && stats && (
-          <div className="charts-grid">
-            <div className="stat-card">
-              <div className="stat-value">{stats.testCases.total}</div>
-              <div className="stat-label">Total Test Cases</div>
+          <div className="overview-section">
+            {/* Key Metrics Section */}
+            <div className="metrics-summary">
+              <h3>📈 Key Performance Indicators</h3>
+              <div className="metrics-grid">
+                <div className="metric-card primary">
+                  <div className="metric-icon">✓</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{stats.testCases.total}</div>
+                    <div className="metric-label">Total Test Cases</div>
+                  </div>
+                </div>
+                
+                <div className="metric-card success">
+                  <div className="metric-icon">✓</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {stats.testCases.byStatus?.find(s => s.status === 'passed')?.count || 0}
+                    </div>
+                    <div className="metric-label">Tests Passed</div>
+                    <div className="metric-percentage">
+                      {stats.testCases.total > 0 
+                        ? ((stats.testCases.byStatus?.find(s => s.status === 'passed')?.count || 0) / stats.testCases.total * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="metric-card danger">
+                  <div className="metric-icon">✕</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {stats.testCases.byStatus?.find(s => s.status === 'failed')?.count || 0}
+                    </div>
+                    <div className="metric-label">Tests Failed</div>
+                    <div className="metric-percentage">
+                      {stats.testCases.total > 0 
+                        ? ((stats.testCases.byStatus?.find(s => s.status === 'failed')?.count || 0) / stats.testCases.total * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="metric-card warning">
+                  <div className="metric-icon">⚠</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{stats.bugs.total}</div>
+                    <div className="metric-label">Total Bugs</div>
+                  </div>
+                </div>
+
+                <div className="metric-card info">
+                  <div className="metric-icon">🐛</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {stats.bugs.byStatus?.find(s => s.status === 'open')?.count || 0}
+                    </div>
+                    <div className="metric-label">Open Bugs</div>
+                  </div>
+                </div>
+
+                <div className="metric-card success">
+                  <div className="metric-icon">✓</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {stats.bugs.byStatus?.find(s => s.status === 'closed' || s.status === 'resolved')?.count || 0}
+                    </div>
+                    <div className="metric-label">Resolved Bugs</div>
+                  </div>
+                </div>
+
+                <div className="metric-card primary">
+                  <div className="metric-icon">🏃</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{stats.testRuns.total}</div>
+                    <div className="metric-label">Total Test Runs</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{stats.bugs.total}</div>
-              <div className="stat-label">Total Bugs</div>
+
+            {/* Charts Section */}
+            <div className="charts-grid">
+              {stats.testCases.byStatus && stats.testCases.byStatus.length > 0 && (
+                <Charts.PieChart data={stats.testCases.byStatus} title="Test Cases Distribution" />
+              )}
+
+              {stats.testCases.byPriority && stats.testCases.byPriority.length > 0 && (
+                <Charts.BarChart data={stats.testCases.byPriority} title="Test Cases by Priority" />
+              )}
+
+              {stats.testCases.byType && stats.testCases.byType.length > 0 && (
+                <Charts.PieChart data={stats.testCases.byType} title="Test Types Distribution" />
+              )}
+
+              {stats.testCases.byEnvironment && stats.testCases.byEnvironment.length > 0 && (
+                <Charts.BarChart
+                  data={stats.testCases.byEnvironment}
+                  title="Test Cases by Environment"
+                />
+              )}
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{stats.testRuns.total}</div>
-              <div className="stat-label">Test Runs</div>
-            </div>
-
-            {stats.testCases.byStatus && stats.testCases.byStatus.length > 0 && (
-              <Charts.PieChart data={stats.testCases.byStatus} title="Test Cases by Status" />
-            )}
-
-            {stats.testCases.byPriority && stats.testCases.byPriority.length > 0 && (
-              <Charts.BarChart data={stats.testCases.byPriority} title="Test Cases by Priority" />
-            )}
-
-            {stats.testCases.byType && stats.testCases.byType.length > 0 && (
-              <Charts.PieChart data={stats.testCases.byType} title="Test Cases by Type" />
-            )}
-
-            {stats.testCases.byEnvironment && stats.testCases.byEnvironment.length > 0 && (
-              <Charts.BarChart
-                data={stats.testCases.byEnvironment}
-                title="Test Cases by Environment"
-              />
-            )}
           </div>
         )}
 
         {activeTab === 'bugs' && bugStats && (
-          <div className="charts-grid">
-            {bugStats.bugs.bySeverity && bugStats.bugs.bySeverity.length > 0 && (
-              <Charts.PieChart data={bugStats.bugs.bySeverity} title="Bugs by Severity" />
-            )}
+          <div className="bugs-section">
+            {/* Bug Metrics */}
+            <div className="metrics-summary">
+              <h3>🐛 Bug Analysis</h3>
+              <div className="metrics-grid">
+                <div className="metric-card primary">
+                  <div className="metric-icon">🐛</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{bugStats.bugs.total || 0}</div>
+                    <div className="metric-label">Total Bugs Reported</div>
+                  </div>
+                </div>
 
-            {bugStats.bugs.byStatus && bugStats.bugs.byStatus.length > 0 && (
-              <Charts.BarChart data={bugStats.bugs.byStatus} title="Bugs by Status" />
-            )}
+                <div className="metric-card danger">
+                  <div className="metric-icon">🔴</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {bugStats.bugs.bySeverity?.find(s => s.severity === 'critical')?.count || 0}
+                    </div>
+                    <div className="metric-label">Critical Issues</div>
+                  </div>
+                </div>
+
+                <div className="metric-card warning">
+                  <div className="metric-icon">🟠</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {bugStats.bugs.bySeverity?.find(s => s.severity === 'high')?.count || 0}
+                    </div>
+                    <div className="metric-label">High Priority</div>
+                  </div>
+                </div>
+
+                <div className="metric-card info">
+                  <div className="metric-icon">🔵</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {bugStats.bugs.bySeverity?.find(s => s.severity === 'medium')?.count || 0}
+                    </div>
+                    <div className="metric-label">Medium Priority</div>
+                  </div>
+                </div>
+
+                <div className="metric-card success">
+                  <div className="metric-icon">✓</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {bugStats.bugs.byStatus?.find(s => s.status === 'resolved' || s.status === 'closed')?.count || 0}
+                    </div>
+                    <div className="metric-label">Resolved Bugs</div>
+                  </div>
+                </div>
+
+                <div className="metric-card warning">
+                  <div className="metric-icon">⏳</div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {bugStats.bugs.byStatus?.find(s => s.status === 'open')?.count || 0}
+                    </div>
+                    <div className="metric-label">Pending Resolution</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bug Charts */}
+            <div className="charts-grid">
+              {bugStats.bugs.bySeverity && bugStats.bugs.bySeverity.length > 0 && (
+                <Charts.PieChart data={bugStats.bugs.bySeverity} title="Bugs by Severity" />
+              )}
+
+              {bugStats.bugs.byStatus && bugStats.bugs.byStatus.length > 0 && (
+                <Charts.BarChart data={bugStats.bugs.byStatus} title="Bugs by Status" />
+              )}
+            </div>
           </div>
         )}
 
