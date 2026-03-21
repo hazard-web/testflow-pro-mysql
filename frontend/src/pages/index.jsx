@@ -40,7 +40,7 @@ import {
   useUpdateProject,
   useDeleteProject,
 } from '../hooks/useData';
-import { exportToCSV, moduleColor, prioColor, MetricCard, Badge, ProgressBar } from '../components/shared';
+import { exportToCSV, moduleColor, prioColor, MetricCard, Badge, ProgressBar, Modal, Confirm, StepBuilder, CommentThread, EmptyState } from '../components/shared';
 
 // ─────────────────────────────────────────────
 //  LOGIN
