@@ -22,6 +22,10 @@ export function TestCaseFilters({
     startDate: filters.startDate || '',
     endDate: filters.endDate || '',
   });
+  const [timeRange, setTimeRange] = useState({
+    startTime: filters.startTime || '',
+    endTime: filters.endTime || '',
+  });
 
   // Load presets from localStorage on mount
   useEffect(() => {
@@ -128,8 +132,19 @@ export function TestCaseFilters({
     });
   };
 
+  const handleTimeChange = (type, value) => {
+    const newRange = { ...timeRange, [type]: value };
+    setTimeRange(newRange);
+    onFiltersChange({
+      ...filters,
+      startTime: newRange.startTime,
+      endTime: newRange.endTime,
+    });
+  };
+
   const clearFilters = () => {
     setDateRange({ startDate: '', endDate: '' });
+    setTimeRange({ startTime: '', endTime: '' });
     onFiltersChange({
       search: '',
       status: '',
@@ -141,6 +156,8 @@ export function TestCaseFilters({
       type: '',
       startDate: '',
       endDate: '',
+      startTime: '',
+      endTime: '',
     });
     setShowAdvanced(false);
   };
@@ -156,6 +173,8 @@ export function TestCaseFilters({
     filters.type,
     filters.startDate,
     filters.endDate,
+    filters.startTime,
+    filters.endTime,
   ].filter(Boolean).length;
 
   return (
@@ -326,6 +345,28 @@ export function TestCaseFilters({
                 type="date"
                 value={dateRange.endDate}
                 onChange={e => handleDateChange('endDate', e.target.value)}
+                className="filter-date-inline"
+              />
+            </div>
+
+            {/* Time From */}
+            <div className="filter-group-inline">
+              <label>Time From</label>
+              <input
+                type="time"
+                value={timeRange.startTime}
+                onChange={e => handleTimeChange('startTime', e.target.value)}
+                className="filter-date-inline"
+              />
+            </div>
+
+            {/* Time To */}
+            <div className="filter-group-inline">
+              <label>Time To</label>
+              <input
+                type="time"
+                value={timeRange.endTime}
+                onChange={e => handleTimeChange('endTime', e.target.value)}
                 className="filter-date-inline"
               />
             </div>
