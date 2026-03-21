@@ -580,40 +580,102 @@ router.post('/export/:projectId', authenticate, async (req, res) => {
 
       doc.end();
     } else if (format === 'csv') {
-      // Generate CSV
-      let csv = 'TESTFLOW PRO - COMPREHENSIVE REPORT\n';
-      csv += `Generated,${new Date().toISOString()}\n`;
-      csv += `Project ID,${projectId}\n\n`;
+      // Generate Professional CSV with enhanced formatting
+      let csv = '';
+      
+      // Header
+      csv += 'TESTFLOW PRO - COMPREHENSIVE TEST REPORT\n';
+      csv += '===========================================\n\n';
+      csv += `Generated Date: ${new Date().toLocaleString()}\n`;
+      csv += `Project ID: ${projectId}\n`;
+      csv += `Report Type: Comprehensive Analysis\n\n`;
 
-      csv += 'SUMMARY METRICS\n';
-      csv += 'Category,Value\n';
-      csv += `Total Test Cases,${report.summary.totalTestCases}\n`;
-      csv += `Passed Tests,${report.summary.passedTests}\n`;
-      csv += `Failed Tests,${report.summary.failedTests}\n`;
-      csv += `Blocked Tests,${report.summary.blockedTests}\n`;
-      csv += `Open Bugs,${report.summary.openBugs}\n`;
-      csv += `Resolved Bugs,${report.summary.resolvedBugs}\n`;
-      csv += `Total Bugs,${report.summary.totalBugs}\n`;
-      csv += `Pass Rate %,${report.summary.totalTestCases > 0 ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100) : 0}\n\n`;
+      // Calculate metrics
+      const passRate = report.summary.totalTestCases > 0 
+        ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100)
+        : 0;
+      const failRate = report.summary.totalTestCases > 0
+        ? Math.round((report.summary.failedTests / report.summary.totalTestCases) * 100)
+        : 0;
+      const bugResolutionRate = report.summary.totalBugs > 0
+        ? Math.round((report.summary.resolvedBugs / report.summary.totalBugs) * 100)
+        : 0;
 
-      csv += 'TEST CASES BY STATUS\n';
-      csv += 'Status,Count\n';
-      report.breakdown.byStatus.forEach(s => (csv += `${s.status},${s.count}\n`));
-      csv += '\n';
+      // EXECUTIVE SUMMARY
+      csv += 'EXECUTIVE SUMMARY\n';
+      csv += '=================\n';
+      csv += 'Metric,Value,Status\n';
+      csv += `Total Test Cases,${report.summary.totalTestCases},\n`;
+      csv += `Passed Tests,${report.summary.passedTests} (${passRate}%),${passRate >= 80 ? 'PASS' : 'NEEDS ATTENTION'}\n`;
+      csv += `Failed Tests,${report.summary.failedTests} (${failRate}%),${failRate === 0 ? 'EXCELLENT' : 'ACTION REQUIRED'}\n`;
+      csv += `Blocked Tests,${report.summary.blockedTests},\n`;
+      csv += `Total Bugs,${report.summary.totalBugs},\n`;
+      csv += `Open Bugs,${report.summary.openBugs},PENDING\n`;
+      csv += `Resolved Bugs,${report.summary.resolvedBugs} (${bugResolutionRate}%),\n`;
+      csv += `Bug Resolution Rate,${bugResolutionRate}%,${bugResolutionRate >= 70 ? 'GOOD' : 'IMPROVE'}\n\n`;
 
-      csv += 'TEST CASES BY PRIORITY\n';
-      csv += 'Priority,Count\n';
-      report.breakdown.byPriority.forEach(p => (csv += `${p.priority},${p.count}\n`));
-      csv += '\n';
+      // DETAILED BREAKDOWN - Test Cases by Status
+      csv += 'TEST CASES BREAKDOWN BY STATUS\n';
+      csv += '=============================\n';
+      csv += 'Status,Count,Percentage\n';
+      report.breakdown.byStatus.forEach(s => {
+        const pct = report.summary.totalTestCases > 0 
+          ? Math.round((s.count / report.summary.totalTestCases) * 100)
+          : 0;
+        csv += `${s.status},${s.count},${pct}%\n`;
+      });
+      csv += `TOTAL,${report.summary.totalTestCases},100%\n\n`;
 
-      csv += 'BUGS BY SEVERITY\n';
-      csv += 'Severity,Count\n';
-      report.breakdown.bugsBySeverity.forEach(s => (csv += `${s.severity},${s.count}\n`));
-      csv += '\n';
+      // Test Cases by Priority
+      csv += 'TEST CASES BREAKDOWN BY PRIORITY\n';
+      csv += '===============================\n';
+      csv += 'Priority,Count,Percentage\n';
+      report.breakdown.byPriority.forEach(p => {
+        const pct = report.summary.totalTestCases > 0
+          ? Math.round((p.count / report.summary.totalTestCases) * 100)
+          : 0;
+        csv += `${p.priority},${p.count},${pct}%\n`;
+      });
+      csv += `TOTAL,${report.summary.totalTestCases},100%\n\n`;
 
-      csv += 'BUGS BY STATUS\n';
-      csv += 'Status,Count\n';
-      report.breakdown.bugsByStatus.forEach(s => (csv += `${s.status},${s.count}\n`));
+      // BUGS ANALYSIS
+      csv += 'BUGS ANALYSIS\n';
+      csv += '=============\n';
+      csv += 'Metric,Count,Percentage,Priority\n';
+      report.breakdown.bugsBySeverity.forEach(s => {
+        const pct = report.summary.totalBugs > 0
+          ? Math.round((s.count / report.summary.totalBugs) * 100)
+          : 0;
+        const priority = s.severity === 'Critical' || s.severity === 'High' ? 'URGENT' : 'NORMAL';
+        csv += `${s.severity} Severity,${s.count},${pct}%,${priority}\n`;
+      });
+      csv += `TOTAL BUGS,${report.summary.totalBugs},100%,\n\n`;
+
+      // Bugs by Status
+      csv += 'BUGS BREAKDOWN BY STATUS\n';
+      csv += '=======================\n';
+      csv += 'Status,Count,Percentage\n';
+      report.breakdown.bugsByStatus.forEach(s => {
+        const pct = report.summary.totalBugs > 0
+          ? Math.round((s.count / report.summary.totalBugs) * 100)
+          : 0;
+        csv += `${s.status},${s.count},${pct}%\n`;
+      });
+      csv += `TOTAL,${report.summary.totalBugs},100%\n\n`;
+
+      // RECOMMENDATIONS
+      csv += 'QUALITY METRICS & RECOMMENDATIONS\n';
+      csv += '=================================\n';
+      csv += `Test Pass Rate,${passRate}%,${passRate >= 90 ? 'EXCELLENT' : passRate >= 80 ? 'GOOD' : passRate >= 70 ? 'ACCEPTABLE' : 'POOR'}\n`;
+      csv += `Test Failure Rate,${failRate}%,${failRate === 0 ? 'EXCELLENT' : failRate <= 10 ? 'GOOD' : 'ACTION NEEDED'}\n`;
+      csv += `Bug Resolution Rate,${bugResolutionRate}%,${bugResolutionRate >= 80 ? 'EXCELLENT' : bugResolutionRate >= 60 ? 'GOOD' : 'IMPROVEMENT NEEDED'}\n`;
+      csv += `Critical Bugs Open,${report.breakdown.bugsBySeverity.find(b => b.severity === 'Critical')?.count || 0},${(report.breakdown.bugsBySeverity.find(b => b.severity === 'Critical')?.count || 0) > 0 ? 'NEEDS ATTENTION' : 'NONE'}\n\n`;
+
+      // FOOTER
+      csv += 'NOTES\n';
+      csv += '=====\n';
+      csv += 'Generated by TestFlow Pro - Professional Test Management\n';
+      csv += 'For more details, visit the TestFlow Pro Dashboard\n';
 
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename=testflow-report.csv');
