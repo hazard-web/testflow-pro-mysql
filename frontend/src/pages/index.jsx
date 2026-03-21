@@ -41,23 +41,23 @@ import {
   useUpdateProject,
   useDeleteProject,
 } from '../hooks/useData';
-import { 
-  exportToCSV, 
-  moduleColor, 
-  prioColor, 
-  Badge, 
-  ProgressBar, 
-  Modal, 
-  Confirm, 
-  StepBuilder, 
-  CommentThread, 
-  EmptyState, 
+import {
+  exportToCSV,
+  moduleColor,
+  prioColor,
+  Badge,
+  ProgressBar,
+  Modal,
+  Confirm,
+  StepBuilder,
+  CommentThread,
+  EmptyState,
   Avatar,
-  MetricCard 
+  MetricCard,
 } from '../components/shared';
 
 // ─────────────────────────────────────────────
-//  LOGIN
+//  LOGIN PAGE
 // ─────────────────────────────────────────────
 export function LoginPage() {
   const { login } = useAuth();
@@ -74,7 +74,8 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tempTokens, setTempTokens] = useState(null);
-
+  // Metro build timestamp: 2026-03-21T15:30:00Z
+  console.log('Dashboard page loaded - MetricCard should be available');
   const submit = async e => {
     e.preventDefault();
     setErr('');
