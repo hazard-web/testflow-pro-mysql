@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 const getApiUrl = () => {
   // Check for backend URL (production)
   if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    return backendUrl.endsWith('/api') ? backendUrl : `${backendUrl}/api`;
   }
   // Check for API URL (fallback)
   if (import.meta.env.VITE_API_URL) {
