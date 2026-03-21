@@ -41,7 +41,20 @@ import {
   useUpdateProject,
   useDeleteProject,
 } from '../hooks/useData';
-import { exportToCSV, moduleColor, prioColor, MetricCard, Badge, ProgressBar, Modal, Confirm, StepBuilder, CommentThread, EmptyState, Avatar } from '../components/shared';
+import { 
+  exportToCSV, 
+  moduleColor, 
+  prioColor, 
+  Badge, 
+  ProgressBar, 
+  Modal, 
+  Confirm, 
+  StepBuilder, 
+  CommentThread, 
+  EmptyState, 
+  Avatar,
+  MetricCard 
+} from '../components/shared';
 
 // ─────────────────────────────────────────────
 //  LOGIN
