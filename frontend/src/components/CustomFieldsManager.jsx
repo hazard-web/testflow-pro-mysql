@@ -32,7 +32,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
     try {
       const data = await api.get(`/custom-fields/values/${testcaseId}`);
       const values = {};
-      data.forEach((v) => {
+      data.forEach(v => {
         values[v.field_id] = v.value ? JSON.parse(v.value) : '';
       });
       setFieldValues(values);
@@ -95,7 +95,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
     }
   };
 
-  const handleDeleteField = async (fieldId) => {
+  const handleDeleteField = async fieldId => {
     if (!window.confirm('Delete this custom field?')) return;
 
     try {
@@ -125,11 +125,11 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
             type="text"
             placeholder="Field name"
             value={newField.fieldName}
-            onChange={(e) => setNewField({ ...newField, fieldName: e.target.value })}
+            onChange={e => setNewField({ ...newField, fieldName: e.target.value })}
           />
           <select
             value={newField.fieldType}
-            onChange={(e) => setNewField({ ...newField, fieldType: e.target.value })}
+            onChange={e => setNewField({ ...newField, fieldType: e.target.value })}
           >
             <option value="text">Text</option>
             <option value="select">Select</option>
@@ -142,13 +142,13 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
             type="text"
             placeholder="Help text (optional)"
             value={newField.helpText}
-            onChange={(e) => setNewField({ ...newField, helpText: e.target.value })}
+            onChange={e => setNewField({ ...newField, helpText: e.target.value })}
           />
           <label>
             <input
               type="checkbox"
               checked={newField.isRequired}
-              onChange={(e) => setNewField({ ...newField, isRequired: e.target.checked })}
+              onChange={e => setNewField({ ...newField, isRequired: e.target.checked })}
             />
             Required
           </label>
@@ -165,7 +165,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
 
       <div className="fields-container">
         {projectFields && projectFields.length > 0 ? (
-          projectFields.map((field) => (
+          projectFields.map(field => (
             <div key={field.id} className="field-item">
               <div className="field-label">
                 <label>{field.field_name}</label>
@@ -179,7 +179,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
                     <input
                       type="text"
                       value={fieldValues[field.id] || ''}
-                      onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
+                      onChange={e => handleFieldValueChange(field.id, e.target.value)}
                       placeholder={`Enter ${field.field_name}`}
                     />
                   )}
@@ -188,7 +188,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
                     <input
                       type="number"
                       value={fieldValues[field.id] || ''}
-                      onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
+                      onChange={e => handleFieldValueChange(field.id, e.target.value)}
                       placeholder={`Enter ${field.field_name}`}
                     />
                   )}
@@ -197,14 +197,14 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
                     <input
                       type="date"
                       value={fieldValues[field.id] || ''}
-                      onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
+                      onChange={e => handleFieldValueChange(field.id, e.target.value)}
                     />
                   )}
 
                   {field.field_type === 'select' && field.field_options && (
                     <select
                       value={fieldValues[field.id] || ''}
-                      onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
+                      onChange={e => handleFieldValueChange(field.id, e.target.value)}
                     >
                       <option value="">Select {field.field_name}</option>
                       {JSON.parse(field.field_options || '[]').map((opt, idx) => (
@@ -219,7 +219,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
                     <input
                       type="checkbox"
                       checked={fieldValues[field.id] === true || fieldValues[field.id] === 'true'}
-                      onChange={(e) => handleFieldValueChange(field.id, e.target.checked)}
+                      onChange={e => handleFieldValueChange(field.id, e.target.checked)}
                     />
                   )}
                 </div>

@@ -51,7 +51,7 @@ export default function WorkflowManager({ projectId, testcaseId, currentState, o
     }
   };
 
-  const handleTransition = async (toState) => {
+  const handleTransition = async toState => {
     if (!testcaseId || currentState === toState) return;
 
     try {
@@ -65,7 +65,7 @@ export default function WorkflowManager({ projectId, testcaseId, currentState, o
     }
   };
 
-  const handleDeleteState = async (stateId) => {
+  const handleDeleteState = async stateId => {
     if (!window.confirm('Delete this workflow state?')) return;
 
     try {
@@ -95,18 +95,18 @@ export default function WorkflowManager({ projectId, testcaseId, currentState, o
             type="text"
             placeholder="State name (e.g., In Review)"
             value={newState.name}
-            onChange={(e) => setNewState({ ...newState, name: e.target.value })}
+            onChange={e => setNewState({ ...newState, name: e.target.value })}
           />
           <input
             type="color"
             value={newState.color}
-            onChange={(e) => setNewState({ ...newState, color: e.target.value })}
+            onChange={e => setNewState({ ...newState, color: e.target.value })}
           />
           <label>
             <input
               type="checkbox"
               checked={newState.isDefault}
-              onChange={(e) => setNewState({ ...newState, isDefault: e.target.checked })}
+              onChange={e => setNewState({ ...newState, isDefault: e.target.checked })}
             />
             Default for new test cases
           </label>
@@ -122,7 +122,7 @@ export default function WorkflowManager({ projectId, testcaseId, currentState, o
       )}
 
       <div className="workflow-states">
-        {states.map((state) => (
+        {states.map(state => (
           <div
             key={state.id}
             className={`state-card ${currentState === state.name ? 'active' : ''}`}

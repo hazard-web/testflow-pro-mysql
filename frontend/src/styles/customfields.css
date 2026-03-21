@@ -45,7 +45,7 @@
 .fields-form input:focus,
 .fields-form select:focus {
   outline: none;
-  border-color: #5B8DEE;
+  border-color: #5b8dee;
   box-shadow: 0 0 0 2px rgba(91, 141, 238, 0.1);
 }
 
@@ -59,7 +59,7 @@
   min-width: 120px;
 }
 
-.fields-form input[type="checkbox"] {
+.fields-form input[type='checkbox'] {
   cursor: pointer;
   width: 18px;
   height: 18px;
@@ -81,7 +81,7 @@
 }
 
 .btn-primary {
-  background: #5B8DEE;
+  background: #5b8dee;
   color: white;
 }
 
@@ -100,7 +100,7 @@
 
 .btn-add {
   padding: 0.5rem 1rem;
-  background: #5B8DEE;
+  background: #5b8dee;
   color: white;
   border: none;
   border-radius: 6px;
@@ -128,7 +128,7 @@
 }
 
 .field-item:hover {
-  border-color: #5B8DEE;
+  border-color: #5b8dee;
   box-shadow: 0 2px 8px rgba(91, 141, 238, 0.1);
 }
 
@@ -180,11 +180,11 @@
 .field-input-wrapper input:focus,
 .field-input-wrapper select:focus {
   outline: none;
-  border-color: #5B8DEE;
+  border-color: #5b8dee;
   box-shadow: 0 0 0 2px rgba(91, 141, 238, 0.1);
 }
 
-.field-input-wrapper input[type="checkbox"] {
+.field-input-wrapper input[type='checkbox'] {
   width: 20px;
   height: 20px;
   cursor: pointer;

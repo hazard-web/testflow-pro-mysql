@@ -341,7 +341,11 @@ async function migrate() {
     if (!(await db.schema.hasTable('workflow_states'))) {
       await db.schema.createTable('workflow_states', t => {
         t.string('id', 36).primary();
-        t.string('project_id', 36).notNullable().references('id').inTable('projects').onDelete('CASCADE');
+        t.string('project_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('projects')
+          .onDelete('CASCADE');
         t.string('name', 50).notNullable(); // New, In Progress, Blocked, Closed, etc.
         t.string('color', 30).defaultTo('#5B8DEE'); // For UI display
         t.integer('order').defaultTo(0); // Sort order in workflow
@@ -358,7 +362,11 @@ async function migrate() {
     if (!(await db.schema.hasTable('testcase_workflow_history'))) {
       await db.schema.createTable('testcase_workflow_history', t => {
         t.string('id', 36).primary();
-        t.string('tc_id', 36).notNullable().references('id').inTable('test_cases').onDelete('CASCADE');
+        t.string('tc_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('test_cases')
+          .onDelete('CASCADE');
         t.string('from_state', 50).nullable(); // Previous state
         t.string('to_state', 50).notNullable(); // New state
         t.string('changed_by', 100).nullable(); // User who changed it
@@ -374,9 +382,20 @@ async function migrate() {
     if (!(await db.schema.hasTable('custom_fields'))) {
       await db.schema.createTable('custom_fields', t => {
         t.string('id', 36).primary();
-        t.string('project_id', 36).notNullable().references('id').inTable('projects').onDelete('CASCADE');
+        t.string('project_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('projects')
+          .onDelete('CASCADE');
         t.string('field_name', 100).notNullable(); // e.g., "Device Type", "Browser Version"
-        t.enum('field_type', ['text', 'select', 'multiselect', 'number', 'date', 'checkbox']).defaultTo('text');
+        t.enum('field_type', [
+          'text',
+          'select',
+          'multiselect',
+          'number',
+          'date',
+          'checkbox',
+        ]).defaultTo('text');
         t.json('field_options').nullable(); // For select/multiselect: ["Option1", "Option2"]
         t.boolean('is_required').defaultTo(false);
         t.string('help_text', 500).nullable(); // Instructions for users
@@ -392,8 +411,16 @@ async function migrate() {
     if (!(await db.schema.hasTable('custom_field_values'))) {
       await db.schema.createTable('custom_field_values', t => {
         t.string('id', 36).primary();
-        t.string('tc_id', 36).notNullable().references('id').inTable('test_cases').onDelete('CASCADE');
-        t.string('field_id', 36).notNullable().references('id').inTable('custom_fields').onDelete('CASCADE');
+        t.string('tc_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('test_cases')
+          .onDelete('CASCADE');
+        t.string('field_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('custom_fields')
+          .onDelete('CASCADE');
         t.text('value').nullable(); // Store as JSON string for complex types
         t.timestamps(true, true);
         t.unique(['tc_id', 'field_id']);
@@ -407,7 +434,11 @@ async function migrate() {
     if (!(await db.schema.hasTable('reports'))) {
       await db.schema.createTable('reports', t => {
         t.string('id', 36).primary();
-        t.string('project_id', 36).nullable().references('id').inTable('projects').onDelete('CASCADE');
+        t.string('project_id', 36)
+          .nullable()
+          .references('id')
+          .inTable('projects')
+          .onDelete('CASCADE');
         t.string('name', 200).notNullable();
         t.string('report_type', 50).notNullable(); // e.g., 'test_cases_by_status', 'bug_severity', 'execution_trend'
         t.json('data').notNullable(); // Chart data as JSON

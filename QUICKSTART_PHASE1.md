@@ -5,21 +5,27 @@
 You now have **3 new powerful features** in TestFlow Pro:
 
 ### 1️⃣ Custom Fields
+
 **Add project-specific metadata to test cases**
+
 - Define fields like "Device Type", "Browser Version", "Test Data Set"
 - 6 field types: Text, Dropdown, Multi-select, Number, Date, Checkbox
 - Required field validation
 - Different fields per project
 
 ### 2️⃣ Workflow States
+
 **Track test case progress through your QA process**
+
 - Default: New → In Progress → Blocked → Closed
 - Create custom states for your workflow
 - Track state changes with audit history
 - Color-coded state visualization
 
 ### 3️⃣ Reports & Analytics
+
 **Visual dashboards for test metrics**
+
 - Test case status breakdown (pie chart)
 - Bug severity analysis (pie/bar charts)
 - Execution trends (30-day history)
@@ -31,47 +37,45 @@ You now have **3 new powerful features** in TestFlow Pro:
 ## Where To Find Them?
 
 ### Backend API Endpoints (production-ready)
+
 All endpoints at: `https://prolific-mercy-production.up.railway.app/api/`
 
 **Workflow Endpoints:**
+
 - `GET /workflow/states/:projectId` - View all states
 - `POST /workflow/states/:projectId` - Create new state
 - `PUT /workflow/transition/:testcaseId` - Change test case state
 - `GET /workflow/history/:testcaseId` - See transition history
 
 **Custom Fields Endpoints:**
+
 - `GET /custom-fields/:projectId` - View all fields
 - `POST /custom-fields/:projectId` - Create new field
 - `POST /custom-fields/values/:testcaseId` - Save field value
 - `DELETE /custom-fields/:fieldId` - Remove field
 
 **Reporting Endpoints:**
+
 - `GET /reports/stats/:projectId` - Test case statistics
 - `GET /reports/bug-stats/:projectId` - Bug metrics
 - `GET /reports/stats/:projectId` - Coverage analysis
 
 ### Frontend Components
+
 The components are ready to be imported and used in your pages:
 
 ```jsx
 // Reports Dashboard
 import Reports from './components/Reports';
-<Reports projectId={projectId} />
+<Reports projectId={projectId} />;
 
 // Workflow State Manager
 import WorkflowManager from './components/WorkflowManager';
-<WorkflowManager 
-  projectId={projectId} 
-  testcaseId={testcaseId}
-  currentState={currentState}
-/>
+<WorkflowManager projectId={projectId} testcaseId={testcaseId} currentState={currentState} />;
 
 // Custom Fields Manager
 import CustomFieldsManager from './components/CustomFieldsManager';
-<CustomFieldsManager 
-  projectId={projectId} 
-  testcaseId={testcaseId}
-/>
+<CustomFieldsManager projectId={projectId} testcaseId={testcaseId} />;
 ```
 
 ---
@@ -126,12 +130,14 @@ import CustomFieldsManager from './components/CustomFieldsManager';
 ## Database Migrations
 
 ✅ **Already completed!** The database changes are:
+
 - 5 new tables created
 - test_cases table enhanced with workflow_state field
 - All data indexed for performance
 - Tables ready for 1000+ records each
 
 ### Check Status
+
 ```bash
 # View latest migrations
 npm run db:migrate  # Shows all tables created
@@ -145,6 +151,7 @@ npm run db:reset    # Clears all and recreates
 ## API Usage Examples
 
 ### Create a Custom Field
+
 ```bash
 curl -X POST https://prolific-mercy-production.up.railway.app/api/custom-fields/project-123 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -158,6 +165,7 @@ curl -X POST https://prolific-mercy-production.up.railway.app/api/custom-fields/
 ```
 
 ### Transition a Test Case State
+
 ```bash
 curl -X PUT https://prolific-mercy-production.up.railway.app/api/workflow/transition/tc-123 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -169,12 +177,14 @@ curl -X PUT https://prolific-mercy-production.up.railway.app/api/workflow/transi
 ```
 
 ### Get Test Stats
+
 ```bash
 curl -X GET https://prolific-mercy-production.up.railway.app/api/reports/stats/project-123 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 Response:
+
 ```json
 {
   "testCases": {
@@ -202,6 +212,7 @@ Response:
 ### Who Can Do What?
 
 **Project Admins/Admins:**
+
 - ✅ Create workflow states
 - ✅ Edit workflow states
 - ✅ Delete workflow states
@@ -211,6 +222,7 @@ Response:
 - ✅ View all reports
 
 **All Users:**
+
 - ✅ View reports
 - ✅ Transition test case states
 - ✅ Edit custom field values
@@ -221,21 +233,25 @@ Response:
 ## Troubleshooting
 
 ### "Failed to fetch workflow states"
+
 - Ensure `projectId` is correct
 - Check Authorization header in request
 - Verify JWT token is not expired
 
 ### Custom field not showing in test case
+
 - Field must be created for the project first
 - Refresh the page
 - Check browser console for errors
 
 ### Reports showing no data
+
 - Projects must have test cases
 - Test cases need to be created first
 - Wait a few seconds for data to load
 
 ### Workflow transition failed
+
 - Check test case exists
 - Verify state name is correct
 - Ensure user has permission
@@ -253,6 +269,7 @@ Response:
 ## What's Next? (Phase 2 Roadmap)
 
 📅 **Upcoming enhancements:**
+
 - Sprint/Release planning
 - Time tracking
 - CI/CD integrations
@@ -273,10 +290,10 @@ Response:
 
 ## Summary
 
-| Feature | Status | Where | Access |
-|---------|--------|-------|--------|
-| Custom Fields | ✅ Live | `/api/custom-fields/*` | Via Components |
-| Workflow States | ✅ Live | `/api/workflow/*` | Via Components |
-| Reports | ✅ Live | `/api/reports/*` | Dashboard Tab |
+| Feature         | Status  | Where                  | Access         |
+| --------------- | ------- | ---------------------- | -------------- |
+| Custom Fields   | ✅ Live | `/api/custom-fields/*` | Via Components |
+| Workflow States | ✅ Live | `/api/workflow/*`      | Via Components |
+| Reports         | ✅ Live | `/api/reports/*`       | Dashboard Tab  |
 
 **All systems operational!** 🚀 Start using these features in your projects today.

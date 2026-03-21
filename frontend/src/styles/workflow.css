@@ -23,7 +23,7 @@
 
 .btn-add {
   padding: 0.5rem 1rem;
-  background: #5B8DEE;
+  background: #5b8dee;
   color: white;
   border: none;
   border-radius: 6px;
@@ -47,8 +47,8 @@
   flex-wrap: wrap;
 }
 
-.workflow-form input[type="text"],
-.workflow-form input[type="color"] {
+.workflow-form input[type='text'],
+.workflow-form input[type='color'] {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -57,13 +57,13 @@
   min-width: 150px;
 }
 
-.workflow-form input[type="text"]:focus {
+.workflow-form input[type='text']:focus {
   outline: none;
-  border-color: #5B8DEE;
+  border-color: #5b8dee;
   box-shadow: 0 0 0 2px rgba(91, 141, 238, 0.1);
 }
 
-.workflow-form input[type="color"] {
+.workflow-form input[type='color'] {
   width: 60px;
   cursor: pointer;
 }
@@ -78,7 +78,7 @@
   min-width: 180px;
 }
 
-.workflow-form input[type="checkbox"] {
+.workflow-form input[type='checkbox'] {
   cursor: pointer;
   width: 18px;
   height: 18px;
@@ -100,7 +100,7 @@
 }
 
 .btn-primary {
-  background: #5B8DEE;
+  background: #5b8dee;
   color: white;
 }
 
@@ -130,7 +130,7 @@
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 8px;
-  border-left: 4px solid #5B8DEE;
+  border-left: 4px solid #5b8dee;
   transition: all 0.3s ease;
   cursor: pointer;
 }

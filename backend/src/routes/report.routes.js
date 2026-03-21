@@ -180,13 +180,10 @@ router.get('/execution-trend/:projectId', authenticate, async (req, res) => {
 
     const trend = await db('test_runs')
       .where('created_at', '>=', thirtyDaysAgo)
-      .select(
-        db.raw("DATE(created_at) as date"),
-        'status'
-      )
+      .select(db.raw('DATE(created_at) as date'), 'status')
       .count('* as count')
-      .groupBy(db.raw("DATE(created_at)"), 'status')
-      .orderBy(db.raw("DATE(created_at)"));
+      .groupBy(db.raw('DATE(created_at)'), 'status')
+      .orderBy(db.raw('DATE(created_at)'));
 
     res.json({ trend });
   } catch (err) {
@@ -278,10 +275,25 @@ router.post('/custom', authenticate, async (req, res) => {
         break;
 
       case 'execution_summary':
-        const total = await db('test_cases').where('project_id', projectId).count('* as count').first();
-        const passed = await db('test_cases').where('project_id', projectId).where('status', 'Passed').count('* as count').first();
-        const failed = await db('test_cases').where('project_id', projectId).where('status', 'Failed').count('* as count').first();
-        const pending = await db('test_cases').where('project_id', projectId).where('status', 'Pending').count('* as count').first();
+        const total = await db('test_cases')
+          .where('project_id', projectId)
+          .count('* as count')
+          .first();
+        const passed = await db('test_cases')
+          .where('project_id', projectId)
+          .where('status', 'Passed')
+          .count('* as count')
+          .first();
+        const failed = await db('test_cases')
+          .where('project_id', projectId)
+          .where('status', 'Failed')
+          .count('* as count')
+          .first();
+        const pending = await db('test_cases')
+          .where('project_id', projectId)
+          .where('status', 'Pending')
+          .count('* as count')
+          .first();
         data = {
           total: total.count,
           passed: passed.count,
@@ -343,6 +355,114 @@ router.get('/get/:reportId', authenticate, async (req, res) => {
   } catch (err) {
     console.error('❌ Fetch report error:', err.message);
     res.status(500).json({ error: 'Failed to fetch report' });
+  }
+});
+
+// POST /reports/export/:projectId
+// Export comprehensive report data (CSV or JSON)
+router.post('/export/:projectId', authenticate, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { format = 'json' } = req.body; // json or csv
+
+    // Fetch all report data
+    const testCases = await db('test_cases').where('project_id', projectId).select('*');
+    const bugs = await db('bugs')
+      .join('test_cases', 'bugs.tc_id', '=', 'test_cases.id')
+      .where('test_cases.project_id', projectId)
+      .select('bugs.*');
+
+    // Aggregate metrics
+    const report = {
+      metadata: {
+        projectId,
+        generatedAt: new Date().toISOString(),
+      },
+      summary: {
+        totalTestCases: testCases.length,
+        passedTests: testCases.filter(t => t.status === 'Pass').length,
+        failedTests: testCases.filter(t => t.status === 'Fail').length,
+        blockedTests: testCases.filter(t => t.status === 'Blocked').length,
+        openBugs: bugs.filter(b => b.status !== 'Fixed').length,
+        resolvedBugs: bugs.filter(b => b.status === 'Fixed').length,
+        totalBugs: bugs.length,
+      },
+      breakdown: {
+        byStatus: testCases.reduce((acc, tc) => {
+          const existing = acc.find(x => x.status === tc.status);
+          if (existing) existing.count++;
+          else acc.push({ status: tc.status, count: 1 });
+          return acc;
+        }, []),
+        byPriority: testCases.reduce((acc, tc) => {
+          const existing = acc.find(x => x.priority === tc.priority);
+          if (existing) existing.count++;
+          else acc.push({ priority: tc.priority, count: 1 });
+          return acc;
+        }, []),
+        bugsBySeverity: bugs.reduce((acc, bug) => {
+          const existing = acc.find(x => x.severity === bug.severity);
+          if (existing) existing.count++;
+          else acc.push({ severity: bug.severity, count: 1 });
+          return acc;
+        }, []),
+        bugsByStatus: bugs.reduce((acc, bug) => {
+          const existing = acc.find(x => x.status === bug.status);
+          if (existing) existing.count++;
+          else acc.push({ status: bug.status, count: 1 });
+          return acc;
+        }, []),
+      },
+    };
+
+    if (format === 'csv') {
+      // Generate CSV
+      let csv = 'TESTFLOW PRO - COMPREHENSIVE REPORT\n';
+      csv += `Generated,${new Date().toISOString()}\n`;
+      csv += `Project ID,${projectId}\n\n`;
+
+      csv += 'SUMMARY METRICS\n';
+      csv += 'Category,Value\n';
+      csv += `Total Test Cases,${report.summary.totalTestCases}\n`;
+      csv += `Passed Tests,${report.summary.passedTests}\n`;
+      csv += `Failed Tests,${report.summary.failedTests}\n`;
+      csv += `Blocked Tests,${report.summary.blockedTests}\n`;
+      csv += `Open Bugs,${report.summary.openBugs}\n`;
+      csv += `Resolved Bugs,${report.summary.resolvedBugs}\n`;
+      csv += `Total Bugs,${report.summary.totalBugs}\n`;
+      csv += `Pass Rate %,${report.summary.totalTestCases > 0 ? Math.round((report.summary.passedTests / report.summary.totalTestCases) * 100) : 0}\n\n`;
+
+      csv += 'TEST CASES BY STATUS\n';
+      csv += 'Status,Count\n';
+      report.breakdown.byStatus.forEach(s => (csv += `${s.status},${s.count}\n`));
+      csv += '\n';
+
+      csv += 'TEST CASES BY PRIORITY\n';
+      csv += 'Priority,Count\n';
+      report.breakdown.byPriority.forEach(p => (csv += `${p.priority},${p.count}\n`));
+      csv += '\n';
+
+      csv += 'BUGS BY SEVERITY\n';
+      csv += 'Severity,Count\n';
+      report.breakdown.bugsBySeverity.forEach(s => (csv += `${s.severity},${s.count}\n`));
+      csv += '\n';
+
+      csv += 'BUGS BY STATUS\n';
+      csv += 'Status,Count\n';
+      report.breakdown.bugsByStatus.forEach(s => (csv += `${s.status},${s.count}\n`));
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=testflow-report.csv');
+      res.send(csv);
+    } else {
+      // JSON format
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=testflow-report.json');
+      res.json(report);
+    }
+  } catch (err) {
+    console.error('❌ Export error:', err.message);
+    res.status(500).json({ error: 'Failed to export report' });
   }
 });
 

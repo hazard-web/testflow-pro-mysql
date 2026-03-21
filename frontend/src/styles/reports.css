@@ -11,6 +11,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .reports-header h2 {
@@ -19,9 +21,17 @@
   margin: 0;
 }
 
+.header-controls {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .tabs {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .tab {
@@ -40,8 +50,59 @@
 }
 
 .tab.active {
-  background: #5B8DEE;
+  background: #5b8dee;
   color: white;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.export-btn {
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #ddd;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: #f9f9f9;
+  border-color: #5b8dee;
+  color: #5b8dee;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(91, 141, 238, 0.2);
+}
+
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.export-btn.csv {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.export-btn.csv:hover:not(:disabled) {
+  background: #f0fdf4;
+  border-color: #059669;
+}
+
+.export-btn.json {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.export-btn.json:hover:not(:disabled) {
+  background: #fffbf0;
+  border-color: #d97706;
 }
 
 .reports-content {
@@ -60,7 +121,9 @@
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .chart-container:hover {
@@ -113,7 +176,7 @@
 .stat-value {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #5B8DEE;
+  color: #5b8dee;
   margin-bottom: 0.5rem;
 }
 

@@ -35,12 +35,24 @@ const Charts = {
     return (
       <div className="chart-container">
         <h3>{title}</h3>
-        <canvas ref={canvas} width="200" height="200" style={{ display: 'block', margin: '0 auto' }} />
+        <canvas
+          ref={canvas}
+          width="200"
+          height="200"
+          style={{ display: 'block', margin: '0 auto' }}
+        />
         <div className="chart-legend">
           {data.map((d, i) => (
             <div key={i} className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'][i % 5] }}></span>
-              <span>{d.status || d.priority || d.severity || d.type || 'Other'}: {d.count}</span>
+              <span
+                className="legend-color"
+                style={{
+                  backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'][i % 5],
+                }}
+              ></span>
+              <span>
+                {d.status || d.priority || d.severity || d.type || 'Other'}: {d.count}
+              </span>
             </div>
           ))}
         </div>
@@ -100,7 +112,12 @@ const Charts = {
     return (
       <div className="chart-container">
         <h3>{title}</h3>
-        <canvas ref={canvas} width="400" height="250" style={{ display: 'block', margin: '0 auto' }} />
+        <canvas
+          ref={canvas}
+          width="400"
+          height="250"
+          style={{ display: 'block', margin: '0 auto' }}
+        />
       </div>
     );
   },
@@ -111,6 +128,7 @@ export default function Reports({ projectId }) {
   const [bugStats, setBugStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -132,31 +150,83 @@ export default function Reports({ projectId }) {
     }
   };
 
+  const handleExport = async (format) => {
+    try {
+      setExporting(true);
+      const response = await api.post(`/reports/export/${projectId}`, { format });
+      
+      if (format === 'csv') {
+        // Handle CSV export
+        const blob = new Blob([response], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        // Handle JSON export
+        const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Failed to export report');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) return <div className="report-loading">Loading reports...</div>;
 
   return (
     <div className="reports-dashboard">
       <div className="reports-header">
         <h2>📊 Reports & Analytics</h2>
-        <div className="tabs">
-          <button
-            className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </button>
-          <button
-            className={`tab ${activeTab === 'bugs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('bugs')}
-          >
-            Bugs
-          </button>
-          <button
-            className={`tab ${activeTab === 'coverage' ? 'active' : ''}`}
-            onClick={() => setActiveTab('coverage')}
-          >
-            Coverage
-          </button>
+        <div className="header-controls">
+          <div className="tabs">
+            <button
+              className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              Overview
+            </button>
+            <button
+              className={`tab ${activeTab === 'bugs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('bugs')}
+            >
+              Bugs
+            </button>
+            <button
+              className={`tab ${activeTab === 'coverage' ? 'active' : ''}`}
+              onClick={() => setActiveTab('coverage')}
+            >
+              Coverage
+            </button>
+          </div>
+          <div className="export-buttons">
+            <button
+              className="export-btn csv"
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+              title="Export as CSV file"
+            >
+              {exporting ? '⏳ Exporting...' : '📥 CSV'}
+            </button>
+            <button
+              className="export-btn json"
+              onClick={() => handleExport('json')}
+              disabled={exporting}
+              title="Export as JSON file"
+            >
+              {exporting ? '⏳ Exporting...' : '📥 JSON'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -189,7 +259,10 @@ export default function Reports({ projectId }) {
             )}
 
             {stats.testCases.byEnvironment && stats.testCases.byEnvironment.length > 0 && (
-              <Charts.BarChart data={stats.testCases.byEnvironment} title="Test Cases by Environment" />
+              <Charts.BarChart
+                data={stats.testCases.byEnvironment}
+                title="Test Cases by Environment"
+              />
             )}
           </div>
         )}

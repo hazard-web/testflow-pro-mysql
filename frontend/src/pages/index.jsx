@@ -107,7 +107,10 @@ export function LoginPage() {
     setErr('');
     setLoading(true);
     try {
-      const response = await api.post('/auth/2fa/verify-login', { tempToken: tempTokens, code: twoFACode });
+      const response = await api.post('/auth/2fa/verify-login', {
+        tempToken: tempTokens,
+        code: twoFACode,
+      });
       const data = response.data;
 
       localStorage.setItem('access_token', data.accessToken);
