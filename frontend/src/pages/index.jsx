@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import {
   useTestCases,
   useTestCase,
@@ -79,16 +80,8 @@ export function LoginPage() {
     setErr('');
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      const response = await api.post('/auth/login', form);
+      const data = response.data;
 
       // Check if 2FA is required
       if (data.requiresTwoFA) {
@@ -102,7 +95,7 @@ export function LoginPage() {
         navigate('/dashboard');
       }
     } catch (ex) {
-      const errorMsg = ex.message || 'Login failed';
+      const errorMsg = ex.response?.data?.error || ex.message || 'Login failed';
       setErr(errorMsg);
     } finally {
       setLoading(false);
@@ -114,22 +107,15 @@ export function LoginPage() {
     setErr('');
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/2fa/verify-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tempToken: tempTokens, code: twoFACode }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '2FA verification failed');
-      }
+      const response = await api.post('/auth/2fa/verify-login', { tempToken: tempTokens, code: twoFACode });
+      const data = response.data;
 
       localStorage.setItem('access_token', data.accessToken);
       localStorage.setItem('refresh_token', data.refreshToken);
       navigate('/dashboard');
     } catch (ex) {
-      setErr(ex.message);
+      const errorMsg = ex.response?.data?.error || ex.message || '2FA verification failed';
+      setErr(errorMsg);
     } finally {
       setLoading(false);
     }
