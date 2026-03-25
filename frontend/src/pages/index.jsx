@@ -1205,8 +1205,6 @@ export function SignupPage() {
 //  DASHBOARD
 // ─────────────────────────────────────────────
 export function Dashboard() {
-  const { user } = useAuth();
-  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { data: tcsData } = useTestCases({ limit: 100 });
   const { data: bugs = [] } = useBugs();
   const { data: testers = [] } = useTesters();
@@ -1434,8 +1432,7 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-      {/* Team Activity — online / offline (admin only) */}
-      {isAdmin && (<>
+      {/* Team Activity — online / offline */}
       <div className="sec-lbl" style={{ marginTop: 16 }}>
         Team activity
       </div>
@@ -1534,7 +1531,6 @@ export function Dashboard() {
             })}
         </div>
       </div>
-      </>)}
     </div>
   );
 }
