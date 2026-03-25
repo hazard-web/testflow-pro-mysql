@@ -4338,7 +4338,7 @@ export function Settings() {
       </div>
       <div className="content">
         <div style={{ maxWidth: 560 }}>
-          {user?.role === 'admin' && (
+          {user?.role?.toLowerCase() === 'admin' && (
             <>
               <div className="sec-lbl">Admin - Create User</div>
               <div className="card">
@@ -4400,7 +4400,7 @@ export function Settings() {
               </div>
             </>
           )}
-          <div className="sec-lbl">{user?.role === 'admin' ? 'Profile' : ''}</div>
+          <div className="sec-lbl">{user?.role?.toLowerCase() === 'admin' ? 'Profile' : ''}</div>
           <div className="card">
             <div className="form-row2">
               <div className="fg">
