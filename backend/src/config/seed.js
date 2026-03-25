@@ -35,7 +35,7 @@ async function seed() {
         name: 'Anil Kumar',
         email: 'anil@testflow.dev',
         password_hash: hash,
-        role: 'lead_qa',
+        role: 'Lead QA',
         initials: 'AK',
         avatar_color: 'av-blue',
       },
@@ -44,7 +44,7 @@ async function seed() {
         name: 'Priya Sharma',
         email: 'priya@testflow.dev',
         password_hash: hash,
-        role: 'qa_engineer',
+        role: 'QA Engineer',
         initials: 'PS',
         avatar_color: 'av-green',
       },
@@ -53,7 +53,7 @@ async function seed() {
         name: 'Admin User',
         email: 'admin@testflow.dev',
         password_hash: hash,
-        role: 'admin',
+        role: 'Admin',
         initials: 'AD',
         avatar_color: 'av-violet',
       },
@@ -62,13 +62,13 @@ async function seed() {
         name: 'Manager User',
         email: 'manager@testflow.dev',
         password_hash: hash,
-        role: 'manager',
+        role: 'Manager',
         initials: 'MU',
         avatar_color: 'av-amber',
       },
     ];
     await db('users').insert(userRows);
-    console.log('  ✔ Users (3)');
+    console.log('  ✔ Users (4)');
 
     // ── Testers ──
     const psId = uuidv4(),

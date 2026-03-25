@@ -3261,7 +3261,7 @@ export function Testers() {
               value={form.role}
               onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
             >
-              {['QA Engineer', 'Lead QA', 'Junior QA', 'SDET'].map(r => (
+              {['QA Engineer', 'Lead QA', 'Junior QA', 'SDET', 'Manager'].map(r => (
                 <option key={r}>{r}</option>
               ))}
             </select>
@@ -4338,9 +4338,9 @@ export function Settings() {
       </div>
       <div className="content">
         <div style={{ maxWidth: 560 }}>
-          {['admin', 'manager'].includes(user?.role?.toLowerCase()) && (
+          {user?.role?.toLowerCase() === 'admin' && (
             <>
-              <div className="sec-lbl">{user?.role?.toLowerCase() === 'admin' ? 'Admin' : 'Manager'} - Create User</div>
+              <div className="sec-lbl">Admin - Create User</div>
               <div className="card">
                 <div className="fg">
                   <label className="fl">User Name</label>
@@ -4372,7 +4372,7 @@ export function Settings() {
                     <option value="developer">Developer</option>
                     <option value="lead_qa">Lead QA</option>
                     <option value="manager">Manager</option>
-                    {user?.role?.toLowerCase() === 'admin' && <option value="admin">Admin</option>}
+                    <option value="admin">Admin</option>
                   </select>
                 </div>
                 {createUserMsg && (
@@ -4403,7 +4403,9 @@ export function Settings() {
               </div>
             </>
           )}
-          <div className="sec-lbl">{['admin', 'manager'].includes(user?.role?.toLowerCase()) ? 'Profile' : ''}</div>
+          <div className="sec-lbl">
+            {user?.role?.toLowerCase() === 'admin' ? 'Profile' : ''}
+          </div>
           <div className="card">
             <div className="form-row2">
               <div className="fg">
