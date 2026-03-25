@@ -117,20 +117,13 @@ export default function Layout() {
       ],
     },
     { section: 'Issues', items: [{ to: '/bugs', label: 'Bug Tracker' }] },
-    {
-      section: 'Team',
-      items: [
-        { to: '/testers', label: 'Testers' },
-        { to: '/managers', label: 'Managers' },
-        { to: '/dev-connect', label: 'Dev Connect' },
-      ],
-    },
+    { section: 'Testers', items: [{ to: '/testers', label: 'Testers' }] },
+    { section: 'Managers', items: [{ to: '/managers', label: 'Managers' }] },
+    { section: 'Developers', items: [{ to: '/dev-connect', label: 'Dev Connect' }] },
     { section: 'Analytics', items: [{ to: '/reports', label: 'Reports' }] },
     {
       section: 'Admin',
-      items: user?.role?.toLowerCase() === 'admin'
-        ? [{ to: '/logs', label: 'Access Logs' }]
-        : [],
+      items: user?.role?.toLowerCase() === 'admin' ? [{ to: '/logs', label: 'Access Logs' }] : [],
     },
     { section: 'Settings', items: [{ to: '/settings', label: 'Settings' }] },
   ];
