@@ -1205,6 +1205,8 @@ export function SignupPage() {
 //  DASHBOARD
 // ─────────────────────────────────────────────
 export function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { data: tcsData } = useTestCases({ limit: 100 });
   const { data: bugs = [] } = useBugs();
   const { data: testers = [] } = useTesters();
@@ -1432,10 +1434,19 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-      {/* Team Activity — online / offline */}
-      <div className="sec-lbl" style={{ marginTop: 16 }}>Team activity</div>
+      {/* Team Activity — online / offline (admin only) */}
+      {isAdmin && (<>
+      <div className="sec-lbl" style={{ marginTop: 16 }}>
+        Team activity
+      </div>
       <div className="card">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: 10,
+          }}
+        >
           {[...allUsers]
             .sort((a, b) => {
               const aTime = a.last_login ? new Date(a.last_login).getTime() : 0;
@@ -1477,18 +1488,41 @@ export function Dashboard() {
                     />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: 'var(--text)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {u.name}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--text3)',
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                    >
                       {u.role}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     {isOnline ? (
-                      <span style={{ fontSize: 10, fontWeight: 600, color: '#22c55e' }}>● Online</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#22c55e' }}>
+                        ● Online
+                      </span>
                     ) : lastLogin ? (
-                      <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: 'var(--text3)',
+                          fontFamily: 'var(--font-mono)',
+                        }}
+                      >
                         {formatDistanceToNow(lastLogin, { addSuffix: true })}
                       </span>
                     ) : (
@@ -1500,6 +1534,7 @@ export function Dashboard() {
             })}
         </div>
       </div>
+      </>)}
     </div>
   );
 }

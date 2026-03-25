@@ -428,6 +428,9 @@ userRouter.use(authenticate);
 
 userRouter.get('/', async (req, res, next) => {
   try {
+    if (req.user.role?.toLowerCase() !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can view all users' });
+    }
     const users = await db('users').select(
       'id',
       'name',
