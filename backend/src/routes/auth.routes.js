@@ -722,6 +722,9 @@ router.post(
         manager: 'Manager',
         lead_qa: 'Lead QA',
         admin: 'Admin',
+        qa_engineer: 'QA Engineer',
+        qa: 'QA Engineer',
+        tester: 'QA Engineer',
       };
       const userRole = roleMap[team_type] || 'QA Engineer';
 

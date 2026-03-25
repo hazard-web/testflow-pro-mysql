@@ -51,15 +51,15 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-// In production, allow CLIENT_URL; in development, allow all
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600,
+  })
+);
 
 // ── Rate limiting ──
 const limiter = rateLimit({
