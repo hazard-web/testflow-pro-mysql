@@ -283,7 +283,14 @@ router.post(
       res.json({
         accessToken,
         refreshToken,
-        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          initials: user.initials,
+          avatar_color: user.avatar_color,
+        },
       });
     } catch (error) {
       logger.error('Login error:', error);
