@@ -280,7 +280,7 @@ export const useMentionToast = () => {
 
   useEffect(() => {
     const unreadMentions = notifs.filter(n => !n.is_read && n.type === 'mention');
-    
+
     // On first load, just record existing IDs without toasting
     if (prevCountRef.current === 0 && unreadMentions.length > 0) {
       unreadMentions.forEach(n => seenIdsRef.current.add(n.id));
@@ -383,6 +383,49 @@ export const useDeleteProject = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Project deleted');
+    },
+    onError: onErr,
+  });
+};
+
+// ── TEST CASE ATTACHMENTS ────────────────────
+export const useAttachments = tcId =>
+  useQuery({
+    queryKey: ['attachments', tcId],
+    queryFn: () => api.get(`/test-cases/${tcId}/attachments`).then(r => r.data),
+    enabled: !!tcId,
+  });
+
+export const useUploadAttachment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tcId, files }) => {
+      const formData = new FormData();
+      files.forEach(f => formData.append('files', f));
+      return api
+        .post(`/test-cases/${tcId}/attachments`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        .then(r => r.data);
+    },
+    onSuccess: (data, vars) => {
+      qc.invalidateQueries({ queryKey: ['attachments', vars.tcId] });
+      qc.invalidateQueries({ queryKey: ['test-case', vars.tcId] });
+      toast.success(`${data.length} file(s) uploaded`);
+    },
+    onError: onErr,
+  });
+};
+
+export const useDeleteAttachment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tcId, attachmentId }) =>
+      api.delete(`/test-cases/${tcId}/attachments/${attachmentId}`).then(r => r.data),
+    onSuccess: (data, vars) => {
+      qc.invalidateQueries({ queryKey: ['attachments', vars.tcId] });
+      qc.invalidateQueries({ queryKey: ['test-case', vars.tcId] });
+      toast.success('Attachment deleted');
     },
     onError: onErr,
   });

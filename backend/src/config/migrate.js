@@ -232,6 +232,26 @@ async function migrate() {
       }
     }
 
+    // ── TEST CASE ATTACHMENTS ──────────────────
+    if (!(await db.schema.hasTable('test_case_attachments'))) {
+      await db.schema.createTable('test_case_attachments', t => {
+        t.string('id', 36).primary();
+        t.string('tc_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('test_cases')
+          .onDelete('CASCADE');
+        t.string('filename', 500).notNullable();
+        t.string('original_name', 500).notNullable();
+        t.string('mime_type', 100).notNullable();
+        t.integer('size').unsigned().notNullable();
+        t.enum('type', ['screenshot', 'recording']).defaultTo('screenshot');
+        t.string('uploaded_by', 100).nullable();
+        t.timestamp('created_at').defaultTo(db.fn.now());
+      });
+      console.log('  ✔ test_case_attachments');
+    }
+
     // ── SECURITY FEATURES ──────────────────────
 
     // 1. Refresh Tokens (Token Rotation)

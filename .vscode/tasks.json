@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "🚀 Backend Dev Server",
+			"type": "shell",
+			"command": "cd /Users/shivambhardwaj/Downloads/testflow-pro-mysql/backend && npx nodemon src/server.js",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Backend Server",
+			"type": "shell",
+			"command": "cd /Users/shivambhardwaj/Downloads/testflow-pro-mysql/backend && npx nodemon src/server.js",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Frontend Dev Server",
+			"type": "shell",
+			"command": "cd /Users/shivambhardwaj/Downloads/testflow-pro-mysql/frontend && /Users/shivambhardwaj/Downloads/testflow-pro-mysql/node_modules/.bin/vite --port 3000 --host 0.0.0.0",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
