@@ -34,8 +34,8 @@ router.get('/my-activity', authenticate, async (req, res) => {
 // GET /api/audit-logs - All audit logs (admin only) with user details
 router.get('/', authenticate, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can view all audit logs' });
+    if (!['admin', 'manager'].includes(req.user.role?.toLowerCase())) {
+      return res.status(403).json({ error: 'Only admins and managers can view audit logs' });
     }
 
     const {
@@ -123,8 +123,8 @@ router.get('/', authenticate, async (req, res) => {
 // GET /api/audit-logs/failed-logins - Failed login attempts
 router.get('/failed-logins', authenticate, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can view failed logins' });
+    if (!['admin', 'manager'].includes(req.user.role?.toLowerCase())) {
+      return res.status(403).json({ error: 'Only admins and managers can view failed logins' });
     }
 
     const { limit = 50, offset = 0 } = req.query;

@@ -123,7 +123,7 @@ export default function Layout() {
     { section: 'Analytics', items: [{ to: '/reports', label: 'Reports' }] },
     {
       section: 'Admin',
-      items: user?.role?.toLowerCase() === 'admin' ? [{ to: '/logs', label: 'Access Logs' }] : [],
+      items: ['admin', 'manager'].includes(user?.role?.toLowerCase()) ? [{ to: '/logs', label: 'Access Logs' }] : [],
     },
     { section: 'Settings', items: [{ to: '/settings', label: 'Settings' }] },
   ];
