@@ -241,6 +241,9 @@ router.post(
       // Clear failed login attempts
       await clearFailedLogins(email);
 
+      // Update last_login timestamp
+      await db('users').where({ id: user.id }).update({ last_login: new Date() });
+
       // Check if 2FA is enabled
       const twoFA = await db('two_fa_settings').where({ user_id: user.id }).first();
       if (twoFA && twoFA.is_enabled) {

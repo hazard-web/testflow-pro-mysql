@@ -47,6 +47,7 @@ import {
   useAttachments,
   useUploadAttachment,
   useDeleteAttachment,
+  useUsers,
 } from '../hooks/useData';
 import {
   exportToCSV,
@@ -1207,6 +1208,8 @@ export function Dashboard() {
   const { data: tcsData } = useTestCases({ limit: 100 });
   const { data: bugs = [] } = useBugs();
   const { data: testers = [] } = useTesters();
+  const { data: devs = [] } = useDevelopers();
+  const { data: allUsers = [] } = useUsers();
   const tcs = tcsData?.data || [];
   const total = tcs.length,
     passed = tcs.filter(t => t.status === 'Pass').length,
@@ -1235,9 +1238,16 @@ export function Dashboard() {
         <MetricCard
           value={testers.filter(t => t.is_active).length}
           label="Active Testers"
-          delta="All online"
+          delta={`${testers.length} total`}
           deltaType="up"
           icon="◎"
+        />
+        <MetricCard
+          value={devs.length}
+          label="Developers"
+          delta={`${devs.filter(d => d.open_bugs > 0).length} with bugs`}
+          deltaType={devs.filter(d => d.open_bugs > 0).length > 0 ? 'dn' : 'up'}
+          icon="⚡"
         />
       </div>
       <div className="split">
@@ -1420,6 +1430,74 @@ export function Dashboard() {
                 </div>
               ))}
           </div>
+        </div>
+      </div>
+      {/* Team Activity — online / offline */}
+      <div className="sec-lbl" style={{ marginTop: 16 }}>Team activity</div>
+      <div className="card">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+          {[...allUsers]
+            .sort((a, b) => {
+              const aTime = a.last_login ? new Date(a.last_login).getTime() : 0;
+              const bTime = b.last_login ? new Date(b.last_login).getTime() : 0;
+              return bTime - aTime;
+            })
+            .map(u => {
+              const lastLogin = u.last_login ? new Date(u.last_login) : null;
+              const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+              const isOnline = lastLogin && lastLogin.getTime() > fiveMinAgo;
+              return (
+                <div
+                  key={u.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    <div className={`av av-sm ${u.avatar_color || 'av-blue'}`}>
+                      {u.initials || u.name?.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: -1,
+                        right: -1,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: isOnline ? '#22c55e' : '#94a3b8',
+                        border: '2px solid var(--surface)',
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {u.name}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                      {u.role}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    {isOnline ? (
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#22c55e' }}>● Online</span>
+                    ) : lastLogin ? (
+                      <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                        {formatDistanceToNow(lastLogin, { addSuffix: true })}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 10, color: 'var(--text3)' }}>Never logged in</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
     </div>
@@ -4007,8 +4085,6 @@ export function Managers() {
 //  DEV CONNECT
 // ─────────────────────────────────────────────
 export function DevConnect() {
-  const { user } = useAuth();
-  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { data: devs = [] } = useDevelopers();
   const { data: bugs = [] } = useBugs({ status: 'Open' });
   const { data: comments = [] } = useComments({ is_dev_thread: true });
@@ -4043,11 +4119,9 @@ export function DevConnect() {
           </div>
         </div>
         <div className="topbar-r">
-          {isAdmin && (
-            <button className="btn btn-sm btn-primary" onClick={() => setModal(true)}>
-              + Link Developer
-            </button>
-          )}
+          <button className="btn btn-sm btn-primary" onClick={() => setModal(true)}>
+            + Link Developer
+          </button>
         </div>
       </div>
       <div className="content">
@@ -4084,20 +4158,18 @@ export function DevConnect() {
                       </div>
                     </div>
                     <Badge status={openBugs ? 'In Progress' : 'Pass'} />
-                    {isAdmin && (
-                      <button
-                        className="btn btn-xs btn-danger"
-                        onClick={async () => {
-                          try {
-                            await deleteDev.mutateAsync(d.id);
-                          } catch (err) {
-                            // Silent error handling
-                          }
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
+                    <button
+                      className="btn btn-xs btn-danger"
+                      onClick={async () => {
+                        try {
+                          await deleteDev.mutateAsync(d.id);
+                        } catch (err) {
+                          // Silent error handling
+                        }
+                      }}
+                    >
+                      Remove
+                    </button>
                   </div>
                 );
               })}

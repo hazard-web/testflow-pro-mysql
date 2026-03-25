@@ -472,7 +472,8 @@ userRouter.patch('/update-role', requireAdmin, async (req, res, next) => {
     const { email, role } = req.body;
     if (!email || !role) return res.status(400).json({ error: 'email and role are required' });
     const validRoles = ['Admin', 'Manager', 'QA Engineer', 'Lead QA', 'Developer'];
-    if (!validRoles.includes(role)) return res.status(400).json({ error: 'Invalid role', validRoles });
+    if (!validRoles.includes(role))
+      return res.status(400).json({ error: 'Invalid role', validRoles });
     const user = await db('users').where({ email }).first();
     if (!user) return res.status(404).json({ error: 'User not found' });
     await db('users').where({ email }).update({ role, updated_at: new Date() });
