@@ -149,8 +149,8 @@ router.post(
         .slice(0, 2);
 
       const userId = uuidv4();
-      // Self-registration only allows qa_engineer or developer (no admin/manager)
-      const userRole = team_type === 'developer' ? 'developer' : 'qa_engineer';
+      // Self-registration only allows QA Engineer or Developer (no Admin/Manager)
+      const userRole = team_type === 'developer' ? 'Developer' : 'QA Engineer';
 
       await db('users').insert({
         id: userId,
@@ -688,10 +688,9 @@ router.post(
   ],
   async (req, res) => {
     try {
-      // Check admin or manager role
-      const callerRole = req.user.role?.toLowerCase();
-      if (callerRole !== 'admin' && callerRole !== 'manager') {
-        return res.status(403).json({ error: 'Only admins and managers can create users' });
+      // Check admin role only
+      if (req.user.role?.toLowerCase() !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can create users' });
       }
 
       const errors = validationResult(req);
@@ -715,13 +714,13 @@ router.post(
         .slice(0, 2);
 
       const userId = uuidv4();
-      const roleMap = { developer: 'developer', manager: 'manager', lead_qa: 'lead_qa' };
-      const userRole = roleMap[team_type] || 'qa_engineer';
-
-      // Managers can't create admin or manager users
-      if (callerRole === 'manager' && (team_type === 'admin' || team_type === 'manager')) {
-        return res.status(403).json({ error: 'Managers cannot create admin or manager users' });
-      }
+      const roleMap = {
+        developer: 'Developer',
+        manager: 'Manager',
+        lead_qa: 'Lead QA',
+        admin: 'Admin',
+      };
+      const userRole = roleMap[team_type] || 'QA Engineer';
 
       // Create user
       await db('users').insert({
@@ -751,7 +750,7 @@ router.post(
           email,
           initials,
           avatar_color: 'av-blue',
-          role: 'QA Engineer',
+          role: userRole,
         });
       }
 

@@ -52,7 +52,7 @@ async function migrate() {
         t.string('name', 100).notNullable();
         t.string('email', 200).notNullable().unique();
         t.string('password_hash', 255).notNullable();
-        t.string('role', 50).defaultTo('qa_engineer');
+        t.string('role', 50).defaultTo('QA Engineer');
         t.string('initials', 10);
         t.string('avatar_color', 30).defaultTo('av-blue');
         t.boolean('is_active').defaultTo(true);
