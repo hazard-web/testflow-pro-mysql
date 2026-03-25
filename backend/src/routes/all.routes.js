@@ -203,11 +203,7 @@ commentRouter.post('/', async (req, res, next) => {
         )
         .andWhereNot('id', u.id); // Don't notify yourself
 
-      const context = req.body.tc_id
-        ? 'a test case'
-        : req.body.bug_id
-          ? 'a bug'
-          : 'Dev Connect';
+      const context = req.body.tc_id ? 'a test case' : req.body.bug_id ? 'a bug' : 'Dev Connect';
 
       const relatedUrl = req.body.tc_id
         ? `/test-cases/${req.body.tc_id}`

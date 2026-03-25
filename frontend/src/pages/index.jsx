@@ -2,7 +2,7 @@
 //  Pages — All page components
 // Build: 2026-03-21 Force rebuild
 // ─────────────────────────────────────────────
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,6 +40,9 @@ import {
   useCreateProject,
   useUpdateProject,
   useDeleteProject,
+  useAttachments,
+  useUploadAttachment,
+  useDeleteAttachment,
 } from '../hooks/useData';
 import {
   exportToCSV,
@@ -1912,6 +1915,52 @@ export function TestCaseDetail() {
   const createBug = useCreateBug();
   const [optimisticStatus, setOptimisticStatus] = useState(null);
 
+  // Attachments
+  const { data: attachments = [] } = useAttachments(id);
+  const uploadAttachment = useUploadAttachment();
+  const deleteAttachment = useDeleteAttachment();
+  const fileInputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [previewAtt, setPreviewAtt] = useState(null);
+
+  const backendBase = (() => {
+    const apiUrl = api.defaults.baseURL || '/api';
+    return apiUrl.replace(/\/api\/?$/, '');
+  })();
+
+  const handleFiles = useCallback(
+    fileList => {
+      const files = Array.from(fileList);
+      if (files.length === 0) return;
+      uploadAttachment.mutate({ tcId: id, files });
+    },
+    [id, uploadAttachment]
+  );
+
+  const handleDrop = useCallback(
+    e => {
+      e.preventDefault();
+      setDragOver(false);
+      handleFiles(e.dataTransfer.files);
+    },
+    [handleFiles]
+  );
+
+  const handleDeleteAttachment = useCallback(
+    attId => {
+      if (window.confirm('Delete this attachment?')) {
+        deleteAttachment.mutate({ tcId: id, attachmentId: attId });
+      }
+    },
+    [id, deleteAttachment]
+  );
+
+  const formatFileSize = bytes => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  };
+
   if (isLoading)
     return (
       <div className="loading-screen">
@@ -2155,6 +2204,185 @@ export function TestCaseDetail() {
                 ))}
               </>
             )}
+
+            {/* ── Attachments Section ────────────────── */}
+            <div
+              className="sec-lbl"
+              style={{
+                marginTop: 14,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>📎 Attachments ({attachments.length})</span>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadAttachment.isPending}
+                style={{ fontSize: 10, padding: '3px 10px' }}
+              >
+                {uploadAttachment.isPending ? 'Uploading…' : '+ Upload'}
+              </button>
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+              style={{ display: 'none' }}
+              onChange={e => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+              }}
+            />
+
+            {/* Drag & drop zone */}
+            <div
+              onDragOver={e => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              style={{
+                border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
+                borderRadius: 'var(--r8)',
+                padding: attachments.length > 0 ? '10px' : '24px 16px',
+                textAlign: 'center',
+                marginBottom: 10,
+                background: dragOver ? 'var(--accent-dim)' : 'var(--bg2)',
+                transition: 'all .15s',
+                cursor: 'pointer',
+              }}
+              onClick={() => !uploadAttachment.isPending && fileInputRef.current?.click()}
+            >
+              {attachments.length === 0 && !uploadAttachment.isPending && (
+                <div style={{ color: 'var(--text3)', fontSize: 12 }}>
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>📷 🎥</div>
+                  <div>Drag & drop screenshots or recordings here</div>
+                  <div style={{ fontSize: 10, marginTop: 4, color: 'var(--text4)' }}>
+                    PNG, JPG, GIF, WebP, MP4, WebM · Max 50 MB
+                  </div>
+                </div>
+              )}
+
+              {uploadAttachment.isPending && (
+                <div style={{ color: 'var(--accent)', fontSize: 12, padding: '8px 0' }}>
+                  <div
+                    className="spinner"
+                    style={{ width: 18, height: 18, margin: '0 auto 6px' }}
+                  />
+                  Uploading…
+                </div>
+              )}
+
+              {/* Attachment grid */}
+              {attachments.length > 0 && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                    gap: 8,
+                    textAlign: 'left',
+                  }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {attachments.map(att => {
+                    const isVideo = att.mime_type?.startsWith('video/');
+                    const fileUrl = `${backendBase}/uploads/attachments/${att.filename}`;
+                    return (
+                      <div
+                        key={att.id}
+                        style={{
+                          position: 'relative',
+                          borderRadius: 'var(--r6)',
+                          overflow: 'hidden',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setPreviewAtt(att)}
+                      >
+                        {isVideo ? (
+                          <video
+                            src={fileUrl}
+                            style={{
+                              width: '100%',
+                              height: 100,
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={fileUrl}
+                            alt={att.original_name}
+                            style={{
+                              width: '100%',
+                              height: 100,
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                          />
+                        )}
+                        <div style={{ padding: '5px 7px' }}>
+                          <div
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 500,
+                              color: 'var(--text)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {isVideo ? '🎥' : '📷'} {att.original_name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 9,
+                              color: 'var(--text3)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            {formatFileSize(att.size)} · {att.uploaded_by}
+                          </div>
+                        </div>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteAttachment(att.id);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            background: 'rgba(0,0,0,0.6)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: 20,
+                            height: 20,
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Delete"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <div className="sec-lbl">Discussion</div>
@@ -2189,6 +2417,100 @@ export function TestCaseDetail() {
           </div>
         </div>
       </div>
+
+      {/* Attachment preview modal */}
+      {previewAtt &&
+        (() => {
+          const isVideo = previewAtt.mime_type?.startsWith('video/');
+          const fileUrl = `${backendBase}/uploads/attachments/${previewAtt.filename}`;
+          return (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                background: 'rgba(0,0,0,0.85)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setPreviewAtt(null)}
+            >
+              <div style={{ position: 'absolute', top: 16, right: 20, display: 'flex', gap: 8 }}>
+                <a
+                  href={fileUrl}
+                  download={previewAtt.original_name}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    background: 'rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                  }}
+                >
+                  ⬇ Download
+                </a>
+                <button
+                  onClick={() => setPreviewAtt(null)}
+                  style={{
+                    background: 'rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '6px 14px',
+                    fontSize: 14,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{ maxWidth: '90vw', maxHeight: '85vh' }}
+              >
+                {isVideo ? (
+                  <video
+                    src={fileUrl}
+                    controls
+                    autoPlay
+                    style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 8 }}
+                  />
+                ) : (
+                  <img
+                    src={fileUrl}
+                    alt={previewAtt.original_name}
+                    style={{
+                      maxWidth: '90vw',
+                      maxHeight: '85vh',
+                      borderRadius: 8,
+                      objectFit: 'contain',
+                    }}
+                  />
+                )}
+              </div>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 20,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  color: '#fff',
+                  fontSize: 11,
+                  textAlign: 'center',
+                  opacity: 0.7,
+                }}
+              >
+                {previewAtt.original_name} · {formatFileSize(previewAtt.size)}
+              </div>
+            </div>
+          );
+        })()}
 
       {/* Edit modal */}
       {editForm && (

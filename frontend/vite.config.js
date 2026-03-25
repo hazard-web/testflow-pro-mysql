@@ -10,9 +10,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       proxy: {
-        '/api': { target: 'https://prolific-mercy-production.up.railway.app', changeOrigin: true },
-        '/uploads': { target: 'https://prolific-mercy-production.up.railway.app', changeOrigin: true }
-      }
+        '/api': { target: env.VITE_BACKEND_URL || 'http://localhost:5000', changeOrigin: true },
+        '/uploads': { target: env.VITE_BACKEND_URL || 'http://localhost:5000', changeOrigin: true },
+      },
     },
     build: {
       outDir: 'dist',
@@ -20,14 +20,14 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react','react-dom','react-router-dom'],
-            query: ['@tanstack/react-query']
-          }
-        }
-      }
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            query: ['@tanstack/react-query'],
+          },
+        },
+      },
     },
     define: {
-      __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
-    }
+      __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    },
   };
 });

@@ -4,9 +4,48 @@
 const router = require('express').Router();
 const { body, query, param, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const db = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 const logger = require('../utils/logger');
+
+// ── MULTER CONFIG ────────────────────────────
+const uploadsDir = path.join(__dirname, '../../uploads/attachments');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${uuidv4()}${ext}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/gif',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+  ];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only images (png/jpg/gif/webp) and videos (mp4/webm/mov) are allowed'), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+});
 
 router.use(authenticate);
 
@@ -132,6 +171,9 @@ router.get('/:id', async (req, res, next) => {
       .where('tc_id', tc.id)
       .select('id', 'bug_id', 'title', 'severity', 'status');
     const comments = await db('comments').where('tc_id', tc.id).orderBy('created_at', 'asc');
+    const attachments = await db('test_case_attachments')
+      .where('tc_id', tc.id)
+      .orderBy('created_at', 'desc');
 
     res.json({
       ...tc,
@@ -148,6 +190,7 @@ router.get('/:id', async (req, res, next) => {
       })(),
       bugs,
       comments,
+      attachments,
     });
   } catch (err) {
     next(err);
@@ -424,6 +467,75 @@ router.get('/meta/modules', async (req, res, next) => {
   try {
     const rows = await db('test_cases').distinct('module').whereNotNull('module').orderBy('module');
     res.json(rows.map(r => r.module));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── ATTACHMENTS ─────────────────────────────
+
+// POST upload attachment(s) to a test case
+router.post('/:id/attachments', upload.array('files', 10), async (req, res, next) => {
+  try {
+    const tcId = req.params.id;
+    const tc = await db('test_cases').where('id', tcId).first();
+    if (!tc) return res.status(404).json({ error: 'Test case not found' });
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const records = req.files.map(file => {
+      const isVideo = file.mimetype.startsWith('video/');
+      return {
+        id: uuidv4(),
+        tc_id: tcId,
+        filename: file.filename,
+        original_name: file.originalname,
+        mime_type: file.mimetype,
+        size: file.size,
+        type: isVideo ? 'recording' : 'screenshot',
+        uploaded_by: req.user?.name || req.user?.email || 'Unknown',
+      };
+    });
+
+    await db('test_case_attachments').insert(records);
+    logger.info(`Uploaded ${records.length} attachment(s) for TC ${tcId}`);
+
+    res.status(201).json(records);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET attachments for a test case
+router.get('/:id/attachments', async (req, res, next) => {
+  try {
+    const attachments = await db('test_case_attachments')
+      .where('tc_id', req.params.id)
+      .orderBy('created_at', 'desc');
+    res.json(attachments);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE a single attachment
+router.delete('/:id/attachments/:attachmentId', async (req, res, next) => {
+  try {
+    const att = await db('test_case_attachments')
+      .where({ id: req.params.attachmentId, tc_id: req.params.id })
+      .first();
+    if (!att) return res.status(404).json({ error: 'Attachment not found' });
+
+    // Delete file from disk
+    const filePath = path.join(uploadsDir, att.filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    await db('test_case_attachments').where('id', att.id).del();
+    logger.info(`Deleted attachment ${att.id} from TC ${req.params.id}`);
+
+    res.json({ message: 'Attachment deleted' });
   } catch (err) {
     next(err);
   }

@@ -180,7 +180,13 @@ export function CommentThread({ comments = [], onPost, loading }) {
   const registeredUsers = apiUsers.map(u => ({
     id: u.id,
     name: u.name,
-    initials: u.initials || u.name.split(' ').map(w => w[0]).join('').slice(0, 2),
+    initials:
+      u.initials ||
+      u.name
+        .split(' ')
+        .map(w => w[0])
+        .join('')
+        .slice(0, 2),
     role: u.role || 'QA',
   }));
 
