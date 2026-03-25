@@ -783,4 +783,52 @@ router.post(
   }
 );
 
+// ─────────────────────────────────────────
+// PATCH /api/auth/change-password
+// ─────────────────────────────────────────
+router.patch(
+  '/change-password',
+  authenticate,
+  [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('New password must be at least 8 characters')
+      .matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+      .withMessage('Password must contain uppercase letter, number, and special character'),
+  ],
+  async (req, res, _next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+      const { currentPassword, newPassword } = req.body;
+      const user = await db('users').where({ id: req.user.id }).first();
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const valid = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+      const password_hash = await bcrypt.hash(newPassword, 12);
+      await db('users').where({ id: req.user.id }).update({ password_hash });
+
+      // Audit log
+      await createAuditLog(db, {
+        userId: req.user.id,
+        action: 'password_changed',
+        entityType: 'user',
+        entityId: req.user.id,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+
+      logger.info(`Password changed for user ${req.user.id}`);
+      res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+      logger.error('Change password error:', error);
+      res.status(500).json({ error: 'Failed to change password' });
+    }
+  }
+);
+
 module.exports = router;
