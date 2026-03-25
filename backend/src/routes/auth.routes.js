@@ -733,7 +733,7 @@ router.post(
         is_active: true,
       });
 
-      // Add to team (developers or testers)
+      // Add to team (developers, managers, or testers)
       if (team_type === 'developer') {
         await db('developers').insert({
           id: uuidv4(),
@@ -742,6 +742,15 @@ router.post(
           initials,
           avatar_color: 'av-green',
           specialisation: 'Full Stack',
+        });
+      } else if (team_type === 'manager') {
+        await db('managers').insert({
+          id: uuidv4(),
+          name,
+          email,
+          initials,
+          avatar_color: 'av-amber',
+          department: 'QA',
         });
       } else {
         await db('testers').insert({

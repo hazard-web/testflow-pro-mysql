@@ -10,6 +10,51 @@ const { authenticate } = require('../middleware/auth');
 const testerRouter = express.Router();
 testerRouter.use(authenticate);
 
+// ── MANAGERS ─────────────────────────────────
+const managerRouter = express.Router();
+managerRouter.use(authenticate);
+
+managerRouter.get('/', async (req, res, next) => {
+  try {
+    const managers = await db('managers').orderBy('name');
+    res.json(managers);
+  } catch (err) {
+    next(err);
+  }
+});
+
+managerRouter.post('/', async (req, res, next) => {
+  try {
+    const id = uuidv4();
+    await db('managers').insert({ id, ...req.body });
+    res.status(201).json(await db('managers').where({ id }).first());
+  } catch (err) {
+    next(err);
+  }
+});
+
+managerRouter.patch('/:id', async (req, res, next) => {
+  try {
+    await db('managers')
+      .where({ id: req.params.id })
+      .update({ ...req.body, updated_at: new Date() });
+    const m = await db('managers').where({ id: req.params.id }).first();
+    if (!m) return res.status(404).json({ error: 'Manager not found' });
+    res.json(m);
+  } catch (err) {
+    next(err);
+  }
+});
+
+managerRouter.delete('/:id', async (req, res, next) => {
+  try {
+    await db('managers').where({ id: req.params.id }).del();
+    res.json({ message: 'Manager removed' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 testerRouter.get('/', async (req, res, next) => {
   try {
     const testers = await db('testers').orderBy('name');
@@ -526,6 +571,7 @@ projectRouter.delete('/:id', async (req, res, next) => {
 
 module.exports = {
   testerRouter,
+  managerRouter,
   runRouter,
   commentRouter,
   reportRouter,

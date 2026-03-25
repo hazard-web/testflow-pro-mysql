@@ -27,6 +27,10 @@ import {
   useDevelopers,
   useCreateDev,
   useDeleteDev,
+  useManagers,
+  useCreateManager,
+  useUpdateManager,
+  useDeleteManager,
   useRuns,
   useCreateRun,
   useDeleteRun,
@@ -3261,7 +3265,7 @@ export function Testers() {
               value={form.role}
               onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
             >
-              {['QA Engineer', 'Lead QA', 'Junior QA', 'SDET', 'Manager'].map(r => (
+              {['QA Engineer', 'Lead QA', 'Junior QA', 'SDET'].map(r => (
                 <option key={r}>{r}</option>
               ))}
             </select>
@@ -3741,6 +3745,238 @@ export function Projects() {
             // Silent error handling
           }
           setConfirm(null);
+        }}
+        onCancel={() => setConfirm(null)}
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  MANAGERS
+// ─────────────────────────────────────────────
+export function Managers() {
+  const { data: managers = [], isLoading } = useManagers();
+  const createM = useCreateManager(),
+    updateM = useUpdateManager(),
+    deleteM = useDeleteManager();
+  const [modal, setModal] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const [form, setForm] = useState({
+    name: '',
+    initials: '',
+    department: 'QA',
+    avatar_color: 'av-amber',
+    is_active: true,
+  });
+  const open = (m = null) => {
+    setEditId(m?.id || null);
+    setForm(
+      m
+        ? {
+            name: m.name,
+            initials: m.initials,
+            department: m.department,
+            avatar_color: m.avatar_color,
+            is_active: m.is_active,
+          }
+        : { name: '', initials: '', department: 'QA', avatar_color: 'av-amber', is_active: true }
+    );
+    setModal(true);
+  };
+  const save = async () => {
+    if (!form.name.trim()) return;
+    try {
+      editId ? await updateM.mutateAsync({ id: editId, ...form }) : await createM.mutateAsync(form);
+      setModal(false);
+    } catch (err) {
+      // Silent error handling
+    }
+  };
+  const active = managers.filter(m => m.is_active).length;
+  const inactive = managers.filter(m => !m.is_active).length;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      <div className="topbar">
+        <div className="topbar-l">
+          <div className="page-title">Managers</div>
+          <div className="breadcrumb" style={{ fontSize: 12, color: 'var(--text3)' }}>
+            Total: {managers.length} · Active: {active} · Inactive: {inactive}
+          </div>
+        </div>
+        <div className="topbar-r">
+          <button className="btn btn-sm btn-primary" onClick={() => open()}>
+            + Add Manager
+          </button>
+        </div>
+      </div>
+      <div className="content">
+        <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+          <MetricCard
+            value={managers.length}
+            label="Total Managers"
+            delta={`${active} active`}
+            deltaType="up"
+          />
+          <MetricCard
+            value={active}
+            label="Active Managers"
+            delta="On duty"
+            deltaType="up"
+          />
+          <MetricCard
+            value={inactive}
+            label="Inactive"
+            delta={inactive === 0 ? 'All active' : `${inactive} inactive`}
+            deltaType={inactive === 0 ? 'up' : 'dn'}
+          />
+        </div>
+        <div className="card card-flush">
+          {isLoading ? (
+            <div className="loading-screen" style={{ height: 200 }}>
+              <div className="spinner" />
+            </div>
+          ) : managers.length === 0 ? (
+            <EmptyState
+              icon="👤"
+              title="No managers yet"
+              subtitle="Add your first manager to get started"
+            />
+          ) : (
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Manager</th>
+                  <th>Department</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {managers.map(m => (
+                  <tr key={m.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                        <Avatar initials={m.initials} color={m.avatar_color} size="md" />
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
+                            {m.name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 10,
+                              color: 'var(--text3)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            Manager
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="ptag amber">{m.department || 'QA'}</span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                        {m.email || '—'}
+                      </span>
+                    </td>
+                    <td>
+                      <Badge status={m.is_active ? 'Pass' : 'Pending'} />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-xs" onClick={() => open(m)}>
+                          Edit
+                        </button>
+                        <button className="btn btn-xs btn-danger" onClick={() => setConfirm(m.id)}>
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+      <Modal
+        open={modal}
+        onClose={() => setModal(false)}
+        title={editId ? 'Edit Manager' : 'Add Manager'}
+        size="sm"
+      >
+        <div className="form-row2">
+          <div className="fg">
+            <label className="fl">Full Name *</label>
+            <input
+              className="fi"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            />
+          </div>
+          <div className="fg">
+            <label className="fl">Initials</label>
+            <input
+              className="fi"
+              value={form.initials}
+              onChange={e => setForm(f => ({ ...f, initials: e.target.value.toUpperCase() }))}
+              maxLength={3}
+            />
+          </div>
+        </div>
+        <div className="form-row2">
+          <div className="fg">
+            <label className="fl">Department</label>
+            <select
+              className="fi fi-sel"
+              value={form.department}
+              onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
+            >
+              {['QA', 'Engineering', 'Product', 'Operations', 'DevOps'].map(d => (
+                <option key={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          <div className="fg">
+            <label className="fl">Avatar Color</label>
+            <select
+              className="fi fi-sel"
+              value={form.avatar_color}
+              onChange={e => setForm(f => ({ ...f, avatar_color: e.target.value }))}
+            >
+              {['av-blue', 'av-green', 'av-amber', 'av-violet', 'av-red', 'av-cyan'].map(c => (
+                <option key={c} value={c}>
+                  {c.replace('av-', '')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="modal-ft">
+          <button className="btn" onClick={() => setModal(false)}>
+            Cancel
+          </button>
+          <button className="btn btn-primary" onClick={save}>
+            Save
+          </button>
+        </div>
+      </Modal>
+      <Confirm
+        open={!!confirm}
+        title="Remove Manager"
+        message="Remove this manager from the platform?"
+        onConfirm={async () => {
+          try {
+            await deleteM.mutateAsync(confirm);
+            setConfirm(null);
+          } catch (err) {
+            // Silent error handling
+          }
         }}
         onCancel={() => setConfirm(null)}
       />

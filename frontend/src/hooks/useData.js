@@ -195,6 +195,46 @@ export const useDeleteDev = () => {
   });
 };
 
+// ── MANAGERS ────────────────────────────────
+export const useManagers = () =>
+  useQuery({ queryKey: ['managers'], queryFn: () => api.get('/managers').then(r => r.data) });
+
+export const useCreateManager = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: data => api.post('/managers', data).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['managers'] });
+      toast.success('Manager added');
+    },
+    onError: onErr,
+  });
+};
+
+export const useUpdateManager = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }) => api.patch(`/managers/${id}`, data).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['managers'] });
+      toast.success('Manager updated');
+    },
+    onError: onErr,
+  });
+};
+
+export const useDeleteManager = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: id => api.delete(`/managers/${id}`).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['managers'] });
+      toast.success('Manager removed');
+    },
+    onError: onErr,
+  });
+};
+
 // ── TEST RUNS ────────────────────────────────
 export const useRuns = () =>
   useQuery({ queryKey: ['runs'], queryFn: () => api.get('/runs').then(r => r.data) });
