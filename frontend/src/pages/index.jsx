@@ -1,11 +1,13 @@
 // ─────────────────────────────────────────────
 //  Pages — All page components
+// Build: 2026-03-21 Force rebuild
 // ─────────────────────────────────────────────
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import {
   useTestCases,
   useTestCase,
@@ -40,23 +42,27 @@ import {
   useDeleteProject,
 } from '../hooks/useData';
 import {
-  Badge,
-  Modal,
-  Confirm,
-  Avatar,
-  ProgressBar,
-  MetricCard,
-  StepBuilder,
-  CommentThread,
-  EmptyState,
   exportToCSV,
   moduleColor,
   prioColor,
+  Badge,
+  ProgressBar,
+  Modal,
+  Confirm,
+  StepBuilder,
+  CommentThread,
+  EmptyState,
+  Avatar,
+  MetricCard,
   AITestCaseGenerator,
-} from '../components/shared'; // eslint-disable-line no-unused-vars
+} from '../components/shared';
+// eslint-disable-next-line no-unused-vars
+import { TestCaseFilters } from '../components/TestCaseFilters';
+// eslint-disable-next-line no-unused-vars
+import { BulkUpdateModal } from '../components/BulkUpdateModal';
 
 // ─────────────────────────────────────────────
-//  LOGIN
+//  LOGIN PAGE
 // ─────────────────────────────────────────────
 export function LoginPage() {
   const { login } = useAuth();
@@ -73,25 +79,18 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tempTokens, setTempTokens] = useState(null);
-
+  const _appVersion = 'v2.2.0'; // Railway backend configured
   const submit = async e => {
     e.preventDefault();
     setErr('');
     setLoading(true);
+    // App version: Railway backend configured
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      const response = await api.post('/auth/login', form);
+      const data = response.data;
 
       // Check if 2FA is required
-      if (data.requiresTwoFA) {
+      if (data.requiresAuth) {
         setTempTokens(data.tempToken);
         setStep('2fa');
       } else {
@@ -102,7 +101,7 @@ export function LoginPage() {
         navigate('/dashboard');
       }
     } catch (ex) {
-      const errorMsg = ex.message || 'Login failed';
+      const errorMsg = ex.response?.data?.error || ex.message || 'Login failed';
       setErr(errorMsg);
     } finally {
       setLoading(false);
@@ -114,22 +113,18 @@ export function LoginPage() {
     setErr('');
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/2fa/verify-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tempToken: tempTokens, code: twoFACode }),
+      const response = await api.post('/auth/2fa/verify-login', {
+        tempToken: tempTokens,
+        code: twoFACode,
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '2FA verification failed');
-      }
+      const data = response.data;
 
       localStorage.setItem('access_token', data.accessToken);
       localStorage.setItem('refresh_token', data.refreshToken);
       navigate('/dashboard');
     } catch (ex) {
-      setErr(ex.message);
+      const errorMsg = ex.response?.data?.error || ex.message || '2FA verification failed';
+      setErr(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -270,6 +265,8 @@ export function LoginPage() {
                   Email Address
                 </label>
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   value={form.email}
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
@@ -591,7 +588,7 @@ export function SignupPage() {
   const [step, setStep] = useState(1);
 
   const validatePassword = pwd => {
-    return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd);
+    return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd) && /[@$!%*?&]/.test(pwd);
   };
 
   const submit = async e => {
@@ -603,7 +600,7 @@ export function SignupPage() {
       return;
     }
     if (!validatePassword(form.password)) {
-      setErr('Password must be at least 8 characters with uppercase & numbers');
+      setErr('Password must be 8+ chars with uppercase, number, and special char (@$!%*?&)');
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -1428,12 +1425,22 @@ export function Dashboard() {
 export function TestCases() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('all');
-  const [search, setSearch] = useState('');
-  const [modFilter, setModFilter] = useState('');
-  const [prioFilter, setPrioFilter] = useState('');
+  const [advancedFilters, setAdvancedFilters] = useState({
+    search: '',
+    status: '',
+    priority: '',
+    module: '',
+    tester_id: '',
+    project_id: '',
+    environment: '',
+    type: '',
+    startDate: '',
+    endDate: '',
+  });
   const [selected, setSelected] = useState(new Set());
   const [tcModal, setTCModal] = useState(false);
   const [aiModal, setAIModal] = useState(false);
+  const [bulkModal, setBulkModal] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -1450,9 +1457,7 @@ export function TestCases() {
   const filters = {
     limit: 200,
     ...(tab !== 'all' && { status: tab }),
-    ...(search && { search }),
-    ...(modFilter && { module: modFilter }),
-    ...(prioFilter && { priority: prioFilter }),
+    ...Object.fromEntries(Object.entries(advancedFilters).filter(([, v]) => v)),
   };
   const { data, isLoading } = useTestCases(filters);
   const { data: allTCData } = useTestCases({ limit: 200 });
@@ -1461,8 +1466,8 @@ export function TestCases() {
   const { data: projects = [] } = useProjects();
   const createTC = useCreateTC();
   const bulkDel = useBulkDeleteTC();
-  const tcs = data?.data || [];
-  const allTCs = allTCData?.data || [];
+  const tcs = Array.isArray(data?.data) ? data.data : [];
+  const allTCs = Array.isArray(allTCData?.data) ? allTCData.data : [];
   const tabs = ['all', 'Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'];
   const tabLabels = ['All', 'Passed', 'Failed', 'In Progress', 'Pending', 'Blocked'];
   const statusMap = {
@@ -1514,6 +1519,18 @@ export function TestCases() {
     }
   };
 
+  const doBulkUpdate = async (action, value) => {
+    await api.patch('/test-cases/bulk/update', {
+      ids: [...selected],
+      action,
+      value,
+    });
+    setSelected(new Set());
+    setBulkModal(false);
+    // Refetch data
+    window.location.reload();
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       {/* Main topbar */}
@@ -1534,37 +1551,27 @@ export function TestCases() {
           </div>
         </div>
       </div>
-      {/* Sub-topbar */}
+
+      {/* Advanced Filters Component */}
+      <TestCaseFilters
+        filters={advancedFilters}
+        onFiltersChange={setAdvancedFilters}
+        modules={modules}
+        testers={testers}
+        projects={projects}
+      />
+
+      {/* Action Bar */}
       <div className="topbar" style={{ height: 44, gap: 8 }}>
-        <div className="topbar-l" style={{ gap: 8, flex: 1 }}>
-          <div className="search-wrap" style={{ maxWidth: 200 }}>
-            <span className="search-icon">⌕</span>
-            <input
-              type="text"
-              placeholder="Filter test cases…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <select className="isel" value={modFilter} onChange={e => setModFilter(e.target.value)}>
-            <option value="">All Modules</option>
-            {modules.map(m => (
-              <option key={m}>{m}</option>
-            ))}
-          </select>
-          <select className="isel" value={prioFilter} onChange={e => setPrioFilter(e.target.value)}>
-            <option value="">All Priority</option>
-            {['Critical', 'High', 'Medium', 'Low'].map(p => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-        </div>
         <div className="topbar-r" style={{ gap: 6 }}>
           {selected.size > 0 && (
             <>
               <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
                 {selected.size} selected
               </span>
+              <button className="btn btn-sm btn-primary" onClick={() => setBulkModal(true)}>
+                ⚡ Bulk Update
+              </button>
               <button className="btn btn-sm btn-danger" onClick={() => setConfirmBulk(true)}>
                 Delete
               </button>
@@ -1837,6 +1844,15 @@ export function TestCases() {
           </button>
         </div>
       </Modal>
+
+      {/* Bulk Update Modal */}
+      <BulkUpdateModal
+        open={bulkModal}
+        onClose={() => setBulkModal(false)}
+        selectedCount={selected.size}
+        onConfirm={doBulkUpdate}
+        testers={testers}
+      />
 
       <Confirm
         open={confirmBulk}
@@ -3931,7 +3947,6 @@ export function Settings() {
     confirmPassword: '',
   });
   const [passErr, setPassErr] = useState('');
-  const [createUserModal, setCreateUserModal] = useState(false);
   const [createUserForm, setCreateUserForm] = useState({
     name: '',
     email: '',
@@ -3974,17 +3989,8 @@ export function Settings() {
     setCreateUserLoading(true);
     setCreateUserMsg(null);
     try {
-      const response = await fetch('/api/auth/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify(createUserForm),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      const response = await api.post('/auth/create-user', createUserForm);
+      const data = response.data;
 
       setCreateUserMsg({
         success: true,
@@ -3995,7 +4001,7 @@ export function Settings() {
     } catch (err) {
       setCreateUserMsg({
         success: false,
-        message: err.message || 'Failed to create user',
+        message: err.response?.data?.error || err.message || 'Failed to create user',
       });
     } finally {
       setCreateUserLoading(false);

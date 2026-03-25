@@ -3,7 +3,7 @@
 //  Run:   npm run migrate
 //  Reset: npm run migrate -- --reset
 // ─────────────────────────────────────────────
-require('dotenv').config({ path: `../../../.env.${process.env.NODE_ENV || 'development'}` });
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const db = require('../config/database');
 
 const RESET = process.argv.includes('--reset');
@@ -32,6 +32,11 @@ async function migrate() {
         'refresh_tokens',
         'users',
         'projects',
+        'custom_field_values',
+        'custom_fields',
+        'testcase_workflow_history',
+        'workflow_states',
+        'reports',
         'knex_migrations',
         'knex_migrations_lock',
       ];
@@ -107,6 +112,7 @@ async function migrate() {
         t.string('module', 100).nullable();
         t.string('priority', 20).defaultTo('Medium');
         t.string('status', 30).defaultTo('Pending');
+        t.string('workflow_state', 50).nullable(); // New workflow state
         t.string('environment', 30).defaultTo('Staging');
         t.string('type', 40).defaultTo('Functional');
         t.text('description').nullable();
@@ -203,13 +209,27 @@ async function migrate() {
     if (!(await db.schema.hasTable('notifications'))) {
       await db.schema.createTable('notifications', t => {
         t.string('id', 36).primary();
+        t.string('user_id', 36).nullable().references('id').inTable('users').onDelete('CASCADE');
         t.string('title', 300).notNullable();
         t.string('sub', 300).nullable();
         t.string('type', 30).defaultTo('info');
+        t.string('related_url', 500).nullable();
         t.boolean('is_read').defaultTo(false);
         t.timestamps(true, true);
+        t.index('user_id');
       });
       console.log('  ✔ notifications');
+    } else {
+      // Add user_id column if missing (for existing installs)
+      const hasCols = await db.schema.hasColumn('notifications', 'user_id');
+      if (!hasCols) {
+        await db.schema.alterTable('notifications', t => {
+          t.string('user_id', 36).nullable().after('id');
+          t.string('related_url', 500).nullable().after('type');
+          t.index('user_id');
+        });
+        console.log('  ✔ notifications (added user_id, related_url)');
+      }
     }
 
     // ── SECURITY FEATURES ──────────────────────
@@ -329,6 +349,120 @@ async function migrate() {
         t.index('attempted_at');
       });
       console.log('  ✔ two_fa_attempts');
+    }
+
+    // ── WORKFLOW STATES ────────────────────────
+    if (!(await db.schema.hasTable('workflow_states'))) {
+      await db.schema.createTable('workflow_states', t => {
+        t.string('id', 36).primary();
+        t.string('project_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('projects')
+          .onDelete('CASCADE');
+        t.string('name', 50).notNullable(); // New, In Progress, Blocked, Closed, etc.
+        t.string('color', 30).defaultTo('#5B8DEE'); // For UI display
+        t.integer('order').defaultTo(0); // Sort order in workflow
+        t.boolean('is_default').defaultTo(false); // Default state for new test cases
+        t.boolean('is_final').defaultTo(false); // Marks completion state
+        t.timestamps(true, true);
+        t.unique(['project_id', 'name']);
+        t.index('project_id');
+      });
+      console.log('  ✔ workflow_states');
+    }
+
+    // ── TESTCASE WORKFLOW HISTORY ──────────────
+    if (!(await db.schema.hasTable('testcase_workflow_history'))) {
+      await db.schema.createTable('testcase_workflow_history', t => {
+        t.string('id', 36).primary();
+        t.string('tc_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('test_cases')
+          .onDelete('CASCADE');
+        t.string('from_state', 50).nullable(); // Previous state
+        t.string('to_state', 50).notNullable(); // New state
+        t.string('changed_by', 100).nullable(); // User who changed it
+        t.text('notes').nullable(); // Why state changed
+        t.timestamps(true, true);
+        t.index('tc_id');
+        t.index('created_at');
+      });
+      console.log('  ✔ testcase_workflow_history');
+    }
+
+    // ── CUSTOM FIELDS ──────────────────────────
+    if (!(await db.schema.hasTable('custom_fields'))) {
+      await db.schema.createTable('custom_fields', t => {
+        t.string('id', 36).primary();
+        t.string('project_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('projects')
+          .onDelete('CASCADE');
+        t.string('field_name', 100).notNullable(); // e.g., "Device Type", "Browser Version"
+        t.enum('field_type', [
+          'text',
+          'select',
+          'multiselect',
+          'number',
+          'date',
+          'checkbox',
+        ]).defaultTo('text');
+        t.json('field_options').nullable(); // For select/multiselect: ["Option1", "Option2"]
+        t.boolean('is_required').defaultTo(false);
+        t.string('help_text', 500).nullable(); // Instructions for users
+        t.integer('order').defaultTo(0); // Display order
+        t.timestamps(true, true);
+        t.unique(['project_id', 'field_name']);
+        t.index('project_id');
+      });
+      console.log('  ✔ custom_fields');
+    }
+
+    // ── CUSTOM FIELD VALUES ────────────────────
+    if (!(await db.schema.hasTable('custom_field_values'))) {
+      await db.schema.createTable('custom_field_values', t => {
+        t.string('id', 36).primary();
+        t.string('tc_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('test_cases')
+          .onDelete('CASCADE');
+        t.string('field_id', 36)
+          .notNullable()
+          .references('id')
+          .inTable('custom_fields')
+          .onDelete('CASCADE');
+        t.text('value').nullable(); // Store as JSON string for complex types
+        t.timestamps(true, true);
+        t.unique(['tc_id', 'field_id']);
+        t.index('tc_id');
+        t.index('field_id');
+      });
+      console.log('  ✔ custom_field_values');
+    }
+
+    // ── REPORTS (Cache) ────────────────────────
+    if (!(await db.schema.hasTable('reports'))) {
+      await db.schema.createTable('reports', t => {
+        t.string('id', 36).primary();
+        t.string('project_id', 36)
+          .nullable()
+          .references('id')
+          .inTable('projects')
+          .onDelete('CASCADE');
+        t.string('name', 200).notNullable();
+        t.string('report_type', 50).notNullable(); // e.g., 'test_cases_by_status', 'bug_severity', 'execution_trend'
+        t.json('data').notNullable(); // Chart data as JSON
+        t.timestamp('generated_at').defaultTo(db.fn.now());
+        t.timestamp('expires_at').nullable(); // For cache expiration
+        t.timestamps(true, true);
+        t.index('project_id');
+        t.index('expires_at');
+      });
+      console.log('  ✔ reports');
     }
 
     console.log('\n✅ All MySQL migrations complete!\n');

@@ -15,8 +15,13 @@ build/
 .env.development
 .env.production
 .env.staging
+.env.example
+.env.docker.example
 .env.production.example
 .env.*.example
+# EXCEPTION: Allow example files that should be committed
+!.env.*.example
+!frontend/.env.production.example
 
 # ── Logs ──
 logs/
@@ -69,3 +74,4 @@ docker-compose.override.yml
 *.sql.backup
 *.sql.dump
 database/*.sql.backup
+.env.save

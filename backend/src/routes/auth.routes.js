@@ -293,7 +293,19 @@ router.post(
 // ─────────────────────────────────────────
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const user = await db('users').where({ id: req.user.id }).first();
+    // Quick validation - user ID must exist in JWT
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Set timeout for database query
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database query timeout')), 10000)
+    );
+
+    const userPromise = db('users').where({ id: req.user.id }).first();
+    const user = await Promise.race([userPromise, timeoutPromise]);
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -310,6 +322,12 @@ router.get('/me', authenticate, async (req, res) => {
     });
   } catch (error) {
     logger.error('Get user error:', error);
+
+    // Return 503 for timeout/connection issues
+    if (error.message === 'Database query timeout' || error.code === 'ETIMEDOUT') {
+      return res.status(503).json({ error: 'Service temporarily unavailable' });
+    }
+
     res.status(500).json({ error: error.message });
   }
 });

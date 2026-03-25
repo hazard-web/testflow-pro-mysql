@@ -13,14 +13,29 @@ const authenticate = async (req, res, next) => {
     }
     const token = header.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await db('users').where({ id: decoded.id, is_active: true }).first();
+    
+    // Add timeout to database query (5 seconds for auth check)
+    const userPromise = db('users')
+      .where({ id: decoded.id, is_active: true })
+      .first();
+    
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database query timeout')), 5000)
+    );
+    
+    const user = await Promise.race([userPromise, timeoutPromise]);
     if (!user) return res.status(401).json({ error: 'User not found or inactive' });
     req.user = user;
     next();
   } catch (err) {
-    if (err.name === 'TokenExpiredError')  return res.status(401).json({ error: 'Token expired' });
-    if (err.name === 'JsonWebTokenError')  return res.status(401).json({ error: 'Invalid token' });
-    logger.error('Auth middleware error:', err);
+    if (err.name === 'TokenExpiredError')
+      return res.status(401).json({ error: 'Token expired' });
+    if (err.name === 'JsonWebTokenError')
+      return res.status(401).json({ error: 'Invalid token' });
+    if (err.message === 'Database query timeout')
+      return res.status(503).json({ error: 'Service temporarily unavailable' });
+    
+    logger.error('Auth middleware error:', err.message);
     return res.status(500).json({ error: 'Authentication error' });
   }
 };

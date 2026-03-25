@@ -3,7 +3,7 @@
 //  Uses app-level UUIDs (no gen_random_uuid())
 //  Run: npm run seed
 // ─────────────────────────────────────────────
-require('dotenv').config({ path: `../../../.env.${process.env.NODE_ENV || 'development'}` });
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');

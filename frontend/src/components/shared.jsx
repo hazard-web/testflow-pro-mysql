@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { useUsers } from '../hooks/useData';
 
 // ── MODAL ────────────────────────────────────
 export function Modal({ open, onClose, title, size = 'md', children }) {
@@ -174,16 +175,14 @@ export function CommentThread({ comments = [], onPost, loading }) {
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Mock registered users - in production, fetch from API
-  const registeredUsers = [
-    { id: 1, name: 'Alex Kumar', initials: 'AK', role: 'QA' },
-    { id: 2, name: 'Shivam Bhardwaj', initials: 'SB', role: 'Developer' },
-    { id: 3, name: 'Priya Singh', initials: 'PS', role: 'QA Lead' },
-    { id: 4, name: 'Rahul Verma', initials: 'RV', role: 'Developer' },
-    { id: 5, name: 'Neha Patel', initials: 'NP', role: 'Product Manager' },
-    { id: 6, name: 'Vikram Roy', initials: 'VR', role: 'QA' },
-    { id: 7, name: 'Anjali Gupta', initials: 'AG', role: 'Tester' },
-  ];
+  // Fetch real users from API for @mention autocomplete
+  const { data: apiUsers = [] } = useUsers();
+  const registeredUsers = apiUsers.map(u => ({
+    id: u.id,
+    name: u.name,
+    initials: u.initials || u.name.split(' ').map(w => w[0]).join('').slice(0, 2),
+    role: u.role || 'QA',
+  }));
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });

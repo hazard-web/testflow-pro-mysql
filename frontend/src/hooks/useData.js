@@ -262,6 +262,51 @@ export const useMarkRead = () => {
   });
 };
 
+// ── USERS (for @mention autocomplete) ────────
+export const useUsers = () =>
+  useQuery({
+    queryKey: ['users'],
+    queryFn: () => api.get('/users').then(r => r.data),
+    staleTime: 60000,
+  });
+
+// ── MENTION TOAST ────────────────────────────
+import { useEffect, useRef } from 'react';
+
+export const useMentionToast = () => {
+  const { data: notifs = [] } = useNotifications();
+  const prevCountRef = useRef(0);
+  const seenIdsRef = useRef(new Set());
+
+  useEffect(() => {
+    const unreadMentions = notifs.filter(n => !n.is_read && n.type === 'mention');
+    
+    // On first load, just record existing IDs without toasting
+    if (prevCountRef.current === 0 && unreadMentions.length > 0) {
+      unreadMentions.forEach(n => seenIdsRef.current.add(n.id));
+      prevCountRef.current = unreadMentions.length;
+      return;
+    }
+
+    // Show toast for NEW mention notifications we haven't seen
+    unreadMentions.forEach(n => {
+      if (!seenIdsRef.current.has(n.id)) {
+        seenIdsRef.current.add(n.id);
+        toast(n.title, {
+          icon: '👋',
+          duration: 6000,
+          style: {
+            border: '1px solid var(--primary)',
+            fontWeight: 500,
+          },
+        });
+      }
+    });
+
+    prevCountRef.current = unreadMentions.length;
+  }, [notifs]);
+};
+
 // ── REPORTS ───────────────────────────────────
 export const useReportSummary = () =>
   useQuery({

@@ -1,4 +1,4 @@
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const express = require('express');
 const helmet = require('helmet');
@@ -25,6 +25,8 @@ const reportRoutes = require('./routes/report.routes');
 const notifRoutes = require('./routes/notification.routes');
 const aiRoutes = require('./routes/ai.routes');
 const auditRoutes = require('./routes/audit.routes');
+const workflowRoutes = require('./routes/workflow.routes');
+const customFieldRoutes = require('./routes/customfield.routes');
 const { projectRouter } = require('./routes/all.routes');
 
 const app = express();
@@ -80,7 +82,7 @@ app.use('/api/', logActivity);
 // ── Static uploads ──
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));
 
-// ── Health check ──
+// ── Health check (quick, no DB) ──
 app.get('/health', (req, res) =>
   res.json({
     status: 'ok',
@@ -89,6 +91,35 @@ app.get('/health', (req, res) =>
     uptime: process.uptime(),
   })
 );
+
+// ── Deep health check (with DB) ──
+app.get('/health/deep', async (req, res) => {
+  try {
+    // Set timeout for DB check
+    const dbCheck = db.raw('SELECT 1');
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database timeout')), 3000)
+    );
+
+    await Promise.race([dbCheck, timeoutPromise]);
+
+    res.json({
+      status: 'healthy',
+      database: 'connected',
+      env: process.env.NODE_ENV,
+      time: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'degraded',
+      database: 'disconnected',
+      error: error.message,
+      time: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  }
+});
 
 // ── API Routes ──
 app.use('/api/auth', authRoutes);
@@ -103,6 +134,8 @@ app.use('/api/notifications', notifRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/projects', projectRouter);
+app.use('/api/workflow', workflowRoutes);
+app.use('/api/custom-fields', customFieldRoutes);
 
 // ── 404 handler ──
 app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.url} not found` }));
@@ -124,7 +157,7 @@ async function start() {
     });
   } catch (err) {
     logger.error('❌ Failed to connect to database:', err.message);
-    logger.error('   Check your .env file and ensure PostgreSQL is running');
+    logger.error('   Check your .env file and ensure MySQL is running');
     process.exit(1);
   }
 }

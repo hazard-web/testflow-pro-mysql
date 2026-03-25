@@ -19,7 +19,11 @@ router.get('/', async (req, res, next) => {
       module: mod,
       tester_id,
       project_id,
+      environment,
+      type,
       search,
+      startDate,
+      endDate,
       page = 1,
       limit = 50,
     } = req.query;
@@ -54,7 +58,14 @@ router.get('/', async (req, res, next) => {
     if (mod) qry = qry.where('tc.module', mod);
     if (tester_id) qry = qry.where('tc.tester_id', tester_id);
     if (project_id) qry = qry.where('tc.project_id', project_id);
-    if (search) qry = qry.where('tc.title', 'like', `%${search}%`);
+    if (environment) qry = qry.where('tc.environment', environment);
+    if (type) qry = qry.where('tc.type', type);
+    if (search)
+      qry = qry
+        .where('tc.title', 'like', `%${search}%`)
+        .orWhere('tc.description', 'like', `%${search}%`);
+    if (startDate) qry = qry.whereDate('tc.created_at', '>=', startDate);
+    if (endDate) qry = qry.whereDate('tc.created_at', '<=', endDate);
 
     let countQry = db('test_cases');
     if (status) countQry = countQry.where('status', status);
@@ -62,7 +73,14 @@ router.get('/', async (req, res, next) => {
     if (mod) countQry = countQry.where('module', mod);
     if (tester_id) countQry = countQry.where('tester_id', tester_id);
     if (project_id) countQry = countQry.where('project_id', project_id);
-    if (search) countQry = countQry.where('title', 'like', `%${search}%`);
+    if (environment) countQry = countQry.where('environment', environment);
+    if (type) countQry = countQry.where('type', type);
+    if (search)
+      countQry = countQry
+        .where('title', 'like', `%${search}%`)
+        .orWhere('description', 'like', `%${search}%`);
+    if (startDate) countQry = countQry.whereDate('created_at', '>=', startDate);
+    if (endDate) countQry = countQry.whereDate('created_at', '<=', endDate);
     const total = await countQry.count('id as count').first();
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -353,6 +371,53 @@ router.delete('/', [body('ids').isArray().notEmpty()], async (req, res, next) =>
     next(err);
   }
 });
+
+// PATCH bulk update test cases
+router.patch(
+  '/bulk/update',
+  [
+    body('ids').isArray().notEmpty().withMessage('IDs array required'),
+    body('action').isIn(['status', 'priority', 'tester_id']).withMessage('Invalid action'),
+    body('value').notEmpty().withMessage('Value required'),
+  ],
+  async (req, res, next) => {
+    try {
+      const { ids, action, value } = req.body;
+
+      // Validate action
+      const validActions = {
+        status: ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'],
+        priority: ['Critical', 'High', 'Medium', 'Low'],
+        tester_id: value, // Any tester ID is valid
+      };
+
+      if (action !== 'tester_id') {
+        if (!validActions[action].includes(value)) {
+          return res.status(400).json({ error: `Invalid ${action} value` });
+        }
+      }
+
+      // Update test cases
+      const updated = await db('test_cases')
+        .whereIn('id', ids)
+        .update({
+          [action]: value,
+          updated_at: new Date(),
+        });
+
+      logger.info(`Bulk updated ${updated} test cases: ${action}=${value}`);
+
+      res.json({
+        message: `${updated} test case(s) updated`,
+        updated,
+        action,
+        value,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 // GET modules list
 router.get('/meta/modules', async (req, res, next) => {
