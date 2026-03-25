@@ -485,7 +485,7 @@ userRouter.get('/developers', async (req, res, next) => {
   }
 });
 
-userRouter.post('/developers', async (req, res, next) => {
+userRouter.post('/developers', requireAdmin, async (req, res, next) => {
   try {
     const id = uuidv4();
     await db('developers').insert({ id, ...req.body });
@@ -495,7 +495,7 @@ userRouter.post('/developers', async (req, res, next) => {
   }
 });
 
-userRouter.patch('/developers/:id', async (req, res, next) => {
+userRouter.patch('/developers/:id', requireAdmin, async (req, res, next) => {
   try {
     await db('developers')
       .where({ id: req.params.id })
@@ -506,7 +506,7 @@ userRouter.patch('/developers/:id', async (req, res, next) => {
   }
 });
 
-userRouter.delete('/developers/:id', async (req, res, next) => {
+userRouter.delete('/developers/:id', requireAdmin, async (req, res, next) => {
   try {
     await db('developers').where({ id: req.params.id }).del();
     res.json({ message: 'Developer removed' });

@@ -3225,7 +3225,10 @@ export function Testers() {
                           <button className="btn btn-xs" onClick={() => open(t)}>
                             Edit
                           </button>
-                          <button className="btn btn-xs btn-danger" onClick={() => setConfirm(t.id)}>
+                          <button
+                            className="btn btn-xs btn-danger"
+                            onClick={() => setConfirm(t.id)}
+                          >
                             Remove
                           </button>
                         </div>
@@ -3904,7 +3907,10 @@ export function Managers() {
                           <button className="btn btn-xs" onClick={() => open(m)}>
                             Edit
                           </button>
-                          <button className="btn btn-xs btn-danger" onClick={() => setConfirm(m.id)}>
+                          <button
+                            className="btn btn-xs btn-danger"
+                            onClick={() => setConfirm(m.id)}
+                          >
                             Remove
                           </button>
                         </div>
@@ -4001,6 +4007,8 @@ export function Managers() {
 //  DEV CONNECT
 // ─────────────────────────────────────────────
 export function DevConnect() {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { data: devs = [] } = useDevelopers();
   const { data: bugs = [] } = useBugs({ status: 'Open' });
   const { data: comments = [] } = useComments({ is_dev_thread: true });
@@ -4035,9 +4043,11 @@ export function DevConnect() {
           </div>
         </div>
         <div className="topbar-r">
-          <button className="btn btn-sm btn-primary" onClick={() => setModal(true)}>
-            + Link Developer
-          </button>
+          {isAdmin && (
+            <button className="btn btn-sm btn-primary" onClick={() => setModal(true)}>
+              + Link Developer
+            </button>
+          )}
         </div>
       </div>
       <div className="content">
@@ -4074,18 +4084,20 @@ export function DevConnect() {
                       </div>
                     </div>
                     <Badge status={openBugs ? 'In Progress' : 'Pass'} />
-                    <button
-                      className="btn btn-xs btn-danger"
-                      onClick={async () => {
-                        try {
-                          await deleteDev.mutateAsync(d.id);
-                        } catch (err) {
-                          // Silent error handling
-                        }
-                      }}
-                    >
-                      Remove
-                    </button>
+                    {isAdmin && (
+                      <button
+                        className="btn btn-xs btn-danger"
+                        onClick={async () => {
+                          try {
+                            await deleteDev.mutateAsync(d.id);
+                          } catch (err) {
+                            // Silent error handling
+                          }
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 );
               })}
