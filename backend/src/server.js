@@ -53,22 +53,33 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc)
+      if (!origin) return callback(null, true);
+      // Allow any *.vercel.app origin (preview deployments)
+      if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(null, false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    maxAge: 600,
+    maxAge: 86400,
   })
 );
+
+// ── Handle preflight OPTIONS requests explicitly (before rate limiter) ──
+app.options('*', cors());
 
 // ── Rate limiting ──
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000,
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX) || 100000,
   message: { error: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'development', // Disable rate limiting in development
+  skip: (req) => req.method === 'OPTIONS' || process.env.NODE_ENV === 'development',
 });
 app.use('/api/', limiter);
 

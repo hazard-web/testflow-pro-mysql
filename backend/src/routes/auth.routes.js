@@ -229,9 +229,18 @@ router.post(
       }
 
       const user = await db('users').where({ email }).first();
-      if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      if (!user) {
+        logger.warn(`Login failed: no user found for email="${email}"`);
         await recordFailedLogin(email, ipAddress, userAgent);
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid credentials — user not found' });
+      }
+      const passwordMatch = await bcrypt.compare(password, user.password_hash);
+      if (!passwordMatch) {
+        logger.warn(
+          `Login failed: wrong password for email="${email}" (user exists, id=${user.id})`
+        );
+        await recordFailedLogin(email, ipAddress, userAgent);
+        return res.status(401).json({ error: 'Invalid credentials — incorrect password' });
       }
 
       if (!user.is_active) {
@@ -807,6 +816,64 @@ router.post(
       });
     } catch (error) {
       logger.error('Create user error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────
+// POST /api/auth/admin-reset-password (ADMIN ONLY)
+// ─────────────────────────────────────────
+router.post(
+  '/admin-reset-password',
+  authenticate,
+  [body('email').isEmail().normalizeEmail()],
+  async (req, res, _next) => {
+    try {
+      if (req.user.role?.toLowerCase() !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can reset user passwords' });
+      }
+
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+      const { email } = req.body;
+      const user = await db('users').where({ email }).first();
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Generate new temporary password
+      const tempPassword = generateRandomToken().slice(0, 12);
+      const password_hash = await bcrypt.hash(tempPassword, 12);
+
+      await db('users').where({ id: user.id }).update({ password_hash });
+
+      // Clear any failed login attempts and unlock account
+      await clearFailedLogins(email);
+      await db('users').where({ id: user.id }).update({ is_locked: false, locked_until: null });
+
+      // Audit log
+      await createAuditLog(db, {
+        userId: req.user.id,
+        action: 'admin_reset_password',
+        entityType: 'user',
+        entityId: user.id,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+
+      logger.info(`Admin ${req.user.email} reset password for user ${email}`);
+      res.json({
+        message: 'Password reset successfully',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          temporary_password: tempPassword,
+          note: 'Share this temporary password with the user. They should change it after login.',
+        },
+      });
+    } catch (error) {
+      logger.error('Admin reset password error:', error);
       res.status(500).json({ error: error.message });
     }
   }

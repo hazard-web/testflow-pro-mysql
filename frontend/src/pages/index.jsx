@@ -111,7 +111,15 @@ export function LoginPage() {
       }
     } catch (ex) {
       if (!ex.response) {
-        setErr('Network error — please check your internet connection and try again');
+        // Could be CORS, network, or timeout issue
+        console.error('Login network error:', ex.message, ex.code);
+        if (ex.code === 'ERR_NETWORK' || ex.message === 'Network Error') {
+          setErr('Unable to connect to server. Please try again in a moment.');
+        } else if (ex.code === 'ECONNABORTED') {
+          setErr('Request timed out. Please try again.');
+        } else {
+          setErr(`Connection error: ${ex.message || 'Unknown error'}`);
+        }
       } else {
         setErr(ex.response?.data?.error || ex.message || 'Login failed');
       }
@@ -4644,6 +4652,9 @@ export function Settings() {
   });
   const [createUserLoading, setCreateUserLoading] = useState(false);
   const [createUserMsg, setCreateUserMsg] = useState(null);
+  const [resetPasswordEmail, setResetPasswordEmail] = useState('');
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [resetPasswordMsg, setResetPasswordMsg] = useState(null);
 
   const saveProfile = async () => {
     try {
@@ -4695,6 +4706,28 @@ export function Settings() {
       });
     } finally {
       setCreateUserLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordEmail) return;
+    setResetPasswordLoading(true);
+    setResetPasswordMsg(null);
+    try {
+      const response = await api.post('/auth/admin-reset-password', { email: resetPasswordEmail });
+      const data = response.data;
+      setResetPasswordMsg({
+        success: true,
+        message: `Password reset successfully!\n\nEmail: ${data.user.email}\nNew Temporary Password: ${data.user.temporary_password}\n\nShare this with the user.`,
+      });
+      setResetPasswordEmail('');
+    } catch (err) {
+      setResetPasswordMsg({
+        success: false,
+        message: err.response?.data?.error || err.message || 'Failed to reset password',
+      });
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
   return (
@@ -4767,6 +4800,48 @@ export function Settings() {
                   disabled={createUserLoading}
                 >
                   {createUserLoading ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+
+              <div className="sec-lbl" style={{ marginTop: 24 }}>
+                Admin - Reset User Password
+              </div>
+              <div className="card">
+                <div className="fg">
+                  <label className="fl">User Email</label>
+                  <input
+                    className="fi"
+                    placeholder="user@example.com"
+                    type="email"
+                    value={resetPasswordEmail}
+                    onChange={e => setResetPasswordEmail(e.target.value)}
+                  />
+                </div>
+                {resetPasswordMsg && (
+                  <div
+                    style={{
+                      padding: '12px',
+                      borderRadius: '4px',
+                      marginBottom: '12px',
+                      fontSize: '12px',
+                      whiteSpace: 'pre-wrap',
+                      backgroundColor: resetPasswordMsg.success ? '#10b981' : '#ef4444',
+                      color: 'white',
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  >
+                    {resetPasswordMsg.success
+                      ? `✅ ${resetPasswordMsg.message}`
+                      : `❌ ${resetPasswordMsg.message}`}
+                  </div>
+                )}
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleResetPassword}
+                  disabled={resetPasswordLoading || !resetPasswordEmail}
+                  style={{ backgroundColor: '#f59e0b' }}
+                >
+                  {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
                 </button>
               </div>
             </>
