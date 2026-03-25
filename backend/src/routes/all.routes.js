@@ -428,20 +428,13 @@ userRouter.use(authenticate);
 
 userRouter.get('/', async (req, res, next) => {
   try {
-    if (req.user.role?.toLowerCase() !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can view all users' });
-    }
-    const users = await db('users').select(
-      'id',
-      'name',
-      'email',
-      'role',
-      'initials',
-      'avatar_color',
-      'is_active',
-      'last_login',
-      'created_at'
-    );
+    const isAdmin = req.user.role?.toLowerCase() === 'admin';
+    const cols = ['id', 'name', 'role', 'initials', 'avatar_color', 'is_active', 'last_login', 'created_at'];
+    if (isAdmin) cols.push('email');
+    const users = await db('users')
+      .whereNotNull('last_login')
+      .select(cols)
+      .orderBy('last_login', 'desc');
     res.json(users);
   } catch (err) {
     next(err);
