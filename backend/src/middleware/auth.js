@@ -5,6 +5,11 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
+// Track last activity update per user to avoid excessive DB writes
+// Only update once per minute per user
+const lastActivityUpdate = new Map();
+const ACTIVITY_UPDATE_INTERVAL = 60 * 1000; // 1 minute
+
 const authenticate = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
@@ -24,6 +29,19 @@ const authenticate = async (req, res, next) => {
     const user = await Promise.race([userPromise, timeoutPromise]);
     if (!user) return res.status(401).json({ error: 'User not found or inactive' });
     req.user = user;
+
+    // Update last_login as activity indicator (throttled to once per minute)
+    const now = Date.now();
+    const lastUpdate = lastActivityUpdate.get(user.id);
+    if (!lastUpdate || now - lastUpdate > ACTIVITY_UPDATE_INTERVAL) {
+      lastActivityUpdate.set(user.id, now);
+      // Fire-and-forget — don't block the request
+      db('users')
+        .where({ id: user.id })
+        .update({ last_login: new Date() })
+        .catch(err => logger.error('Activity update error:', err.message));
+    }
+
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Token expired' });

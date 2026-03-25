@@ -302,12 +302,13 @@ export const useMarkRead = () => {
   });
 };
 
-// ── USERS (for @mention autocomplete) ────────
+// ── USERS (for @mention autocomplete + team activity) ────────
 export const useUsers = () =>
   useQuery({
     queryKey: ['users'],
     queryFn: () => api.get('/users').then(r => r.data),
-    staleTime: 60000,
+    staleTime: 30000,
+    refetchInterval: 60000, // Refresh every 60s for live team activity
   });
 
 // ── MENTION TOAST ────────────────────────────
