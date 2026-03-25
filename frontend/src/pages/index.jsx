@@ -105,12 +105,16 @@ export function LoginPage() {
         // Store tokens and redirect
         localStorage.setItem('access_token', data.accessToken);
         localStorage.setItem('refresh_token', data.refreshToken);
+        localStorage.setItem('user_cache', JSON.stringify(data.user));
         await login(form.email, form.password);
         navigate('/dashboard');
       }
     } catch (ex) {
-      const errorMsg = ex.response?.data?.error || ex.message || 'Login failed';
-      setErr(errorMsg);
+      if (!ex.response) {
+        setErr('Network error — please check your internet connection and try again');
+      } else {
+        setErr(ex.response?.data?.error || ex.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
