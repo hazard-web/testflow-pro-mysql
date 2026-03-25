@@ -27,7 +27,7 @@ const aiRoutes = require('./routes/ai.routes');
 const auditRoutes = require('./routes/audit.routes');
 const workflowRoutes = require('./routes/workflow.routes');
 const customFieldRoutes = require('./routes/customfield.routes');
-const { projectRouter } = require('./routes/all.routes');
+const { projectRouter, managerRouter } = require('./routes/all.routes');
 
 const app = express();
 
@@ -127,6 +127,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/test-cases', testCaseRoutes);
 app.use('/api/bugs', bugRoutes);
 app.use('/api/testers', testerRoutes);
+app.use('/api/managers', managerRouter);
 app.use('/api/runs', runRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/reports', reportRoutes);

@@ -13,6 +13,7 @@ import {
   Projects,
   Bugs,
   Testers,
+  Managers,
   DevConnect,
   Reports,
   Settings,
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="projects" element={<Projects />} />
           <Route path="bugs" element={<Bugs />} />
           <Route path="testers" element={<Testers />} />
+          <Route path="managers" element={<Managers />} />
           <Route path="dev-connect" element={<DevConnect />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />

@@ -23,6 +23,7 @@ async function migrate() {
         'test_cases',
         'test_runs',
         'developers',
+        'managers',
         'testers',
         'two_fa_attempts',
         'two_fa_settings',
@@ -89,6 +90,21 @@ async function migrate() {
         t.timestamps(true, true);
       });
       console.log('  ✔ developers');
+    }
+
+    // ── MANAGERS ──────────────────────────────
+    if (!(await db.schema.hasTable('managers'))) {
+      await db.schema.createTable('managers', t => {
+        t.string('id', 36).primary();
+        t.string('name', 100).notNullable();
+        t.string('initials', 10);
+        t.string('department', 100).defaultTo('QA');
+        t.string('avatar_color', 30).defaultTo('av-amber');
+        t.boolean('is_active').defaultTo(true);
+        t.string('email', 200).nullable();
+        t.timestamps(true, true);
+      });
+      console.log('  ✔ managers');
     }
 
     // ── PROJECTS ───────────────────────────────

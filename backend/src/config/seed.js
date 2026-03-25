@@ -21,6 +21,7 @@ async function seed() {
     await db('test_cases').del();
     await db('test_runs').del();
     await db('developers').del();
+    await db('managers').del();
     await db('testers').del();
     await db('users').del();
     await db('projects').del();
@@ -156,6 +157,20 @@ async function seed() {
       },
     ]);
     console.log('  ✔ Developers (3)');
+
+    // ── Managers ──
+    await db('managers').insert([
+      {
+        id: uuidv4(),
+        name: 'Manager User',
+        initials: 'MU',
+        department: 'QA',
+        avatar_color: 'av-amber',
+        is_active: true,
+        email: 'manager@testflow.dev',
+      },
+    ]);
+    console.log('  ✔ Managers (1)');
 
     // ── Projects ──
     const projAuthId = uuidv4(),

@@ -121,6 +121,7 @@ export default function Layout() {
       section: 'Team',
       items: [
         { to: '/testers', label: 'Testers' },
+        { to: '/managers', label: 'Managers' },
         { to: '/dev-connect', label: 'Dev Connect' },
       ],
     },
