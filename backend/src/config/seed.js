@@ -57,6 +57,15 @@ async function seed() {
         initials: 'AD',
         avatar_color: 'av-violet',
       },
+      {
+        id: uuidv4(),
+        name: 'Manager User',
+        email: 'manager@testflow.dev',
+        password_hash: hash,
+        role: 'manager',
+        initials: 'MU',
+        avatar_color: 'av-amber',
+      },
     ];
     await db('users').insert(userRows);
     console.log('  ✔ Users (3)');

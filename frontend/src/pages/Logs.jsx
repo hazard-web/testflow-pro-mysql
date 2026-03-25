@@ -80,7 +80,8 @@ const LogsDashboard = () => {
   };
 
   useEffect(() => {
-    if (user?.role?.toLowerCase() === 'admin') {
+    const r = user?.role?.toLowerCase();
+    if (r === 'admin' || r === 'manager') {
       fetchLogs(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -145,12 +146,13 @@ const LogsDashboard = () => {
     })();
   };
 
-  if (user?.role !== 'admin') {
+  const userRole = user?.role?.toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'manager') {
     return (
       <div className="logs-container">
         <div className="error-box">
           <h2>🔒 Access Denied</h2>
-          <p>Only administrators can view the logs dashboard.</p>
+          <p>Only administrators and managers can view the logs dashboard.</p>
         </div>
       </div>
     );

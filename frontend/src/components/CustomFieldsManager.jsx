@@ -45,7 +45,7 @@ export default function CustomFieldsManager({ projectId, testcaseId, _fields, on
     try {
       const user = await api.get('/auth/me');
       const r = user?.role?.toLowerCase();
-      setIsAdmin(r === 'admin' || r === 'project_admin');
+      setIsAdmin(r === 'admin' || r === 'manager' || r === 'project_admin');
     } catch (err) {
       setIsAdmin(false);
     }
