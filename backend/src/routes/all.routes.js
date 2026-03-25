@@ -479,6 +479,26 @@ userRouter.patch('/update-role', requireAdmin, async (req, res, next) => {
   }
 });
 
+// Admin-only: delete a user by ID
+userRouter.delete('/delete-user/:id', requireAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (id === req.user.id) return res.status(400).json({ error: 'Cannot delete yourself' });
+    const user = await db('users').where({ id }).first();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Clean up related records
+    await db('refresh_tokens').where({ user_id: id }).del();
+    await db('two_fa_settings').where({ user_id: id }).del();
+    await db('testers').where({ email: user.email }).del();
+    await db('managers').where({ email: user.email }).del();
+    await db('developers').where({ email: user.email }).del();
+    await db('users').where({ id }).del();
+    res.json({ message: `User ${user.name} (${user.email}) deleted` });
+  } catch (err) {
+    next(err);
+  }
+});
+
 userRouter.get('/developers', async (req, res, next) => {
   try {
     const devs = await db('developers').orderBy('name');
