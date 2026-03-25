@@ -54,7 +54,12 @@ import {
   EmptyState,
   Avatar,
   MetricCard,
+  AITestCaseGenerator,
 } from '../components/shared';
+// eslint-disable-next-line no-unused-vars
+import { TestCaseFilters } from '../components/TestCaseFilters';
+// eslint-disable-next-line no-unused-vars
+import { BulkUpdateModal } from '../components/BulkUpdateModal';
 
 // ─────────────────────────────────────────────
 //  LOGIN PAGE
@@ -74,12 +79,12 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tempTokens, setTempTokens] = useState(null);
-  const appVersion = 'v2.2.0'; // Railway backend configured
+  const _appVersion = 'v2.2.0'; // Railway backend configured
   const submit = async e => {
     e.preventDefault();
     setErr('');
     setLoading(true);
-    console.debug('App version:', appVersion);
+    // App version: Railway backend configured
     try {
       const response = await api.post('/auth/login', form);
       const data = response.data;
@@ -1461,8 +1466,8 @@ export function TestCases() {
   const { data: projects = [] } = useProjects();
   const createTC = useCreateTC();
   const bulkDel = useBulkDeleteTC();
-  const tcs = data?.data || [];
-  const allTCs = allTCData?.data || [];
+  const tcs = Array.isArray(data?.data) ? data.data : [];
+  const allTCs = Array.isArray(allTCData?.data) ? allTCData.data : [];
   const tabs = ['all', 'Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'];
   const tabLabels = ['All', 'Passed', 'Failed', 'In Progress', 'Pending', 'Blocked'];
   const statusMap = {

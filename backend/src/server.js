@@ -1,4 +1,4 @@
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const express = require('express');
 const helmet = require('helmet');
@@ -156,7 +156,7 @@ async function start() {
     });
   } catch (err) {
     logger.error('❌ Failed to connect to database:', err.message);
-    logger.error('   Check your .env file and ensure PostgreSQL is running');
+    logger.error('   Check your .env file and ensure MySQL is running');
     process.exit(1);
   }
 }

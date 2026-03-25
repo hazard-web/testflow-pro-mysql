@@ -74,3 +74,4 @@ docker-compose.override.yml
 *.sql.backup
 *.sql.dump
 database/*.sql.backup
+.env.save

@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────
 //  Tests — Auth + Test Cases + Bugs
 // ─────────────────────────────────────────────
-require('dotenv').config({ path: `../../../.env.${process.env.NODE_ENV || 'development'}` });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const request = require('supertest');
 const app = require('../src/server');
 const db = require('../src/config/database');
