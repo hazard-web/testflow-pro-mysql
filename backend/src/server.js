@@ -36,7 +36,13 @@ const app = express();
 app.set('trust proxy', process.env.TRUST_PROXY || 1);
 
 // ── Security ──
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+    contentSecurityPolicy: false,
+  })
+);
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
