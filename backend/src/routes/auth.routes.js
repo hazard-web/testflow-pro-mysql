@@ -688,7 +688,7 @@ router.post(
   async (req, res) => {
     try {
       // Check admin role
-      if (req.user.role !== 'admin') {
+      if (req.user.role?.toLowerCase() !== 'admin') {
         return res.status(403).json({ error: 'Only admins can create users' });
       }
 

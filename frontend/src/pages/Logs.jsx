@@ -80,7 +80,7 @@ const LogsDashboard = () => {
   };
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role?.toLowerCase() === 'admin') {
       fetchLogs(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
