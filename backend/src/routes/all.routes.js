@@ -184,6 +184,51 @@ commentRouter.post('/', async (req, res, next) => {
       bug_id: req.body.bug_id || null,
       is_dev_thread: req.body.is_dev_thread ? 1 : 0,
     });
+
+    // ── Detect @mentions and create notifications ──
+    const mentionRegex = /@([\w]+(?:\s[\w]+)?)/g;
+    const body = req.body.body || '';
+    const mentionedNames = [];
+    let match;
+    while ((match = mentionRegex.exec(body)) !== null) {
+      mentionedNames.push(match[1].trim());
+    }
+
+    if (mentionedNames.length > 0) {
+      // Find matching users by name (case-insensitive)
+      const mentionedUsers = await db('users')
+        .whereIn(
+          db.raw('LOWER(name)'),
+          mentionedNames.map(n => n.toLowerCase())
+        )
+        .andWhereNot('id', u.id); // Don't notify yourself
+
+      const context = req.body.tc_id
+        ? 'a test case'
+        : req.body.bug_id
+          ? 'a bug'
+          : 'Dev Connect';
+
+      const relatedUrl = req.body.tc_id
+        ? `/test-cases/${req.body.tc_id}`
+        : req.body.bug_id
+          ? `/bugs`
+          : `/dev-connect`;
+
+      // Create a notification for each mentioned user
+      for (const mentionedUser of mentionedUsers) {
+        await db('notifications').insert({
+          id: uuidv4(),
+          user_id: mentionedUser.id,
+          title: `${u.name} mentioned you in ${context}`,
+          sub: body.length > 80 ? body.substring(0, 80) + '...' : body,
+          type: 'mention',
+          related_url: relatedUrl,
+          is_read: 0,
+        });
+      }
+    }
+
     res.status(201).json(await db('comments').where({ id }).first());
   } catch (err) {
     next(err);
@@ -255,9 +300,51 @@ reportRouter.get('/tester-performance', async (req, res, next) => {
 const notifRouter = express.Router();
 notifRouter.use(authenticate);
 
+// Get notifications for current user (user-specific + global where user_id is null)
 notifRouter.get('/', async (req, res, next) => {
   try {
-    res.json(await db('notifications').orderBy('created_at', 'desc').limit(50));
+    const userId = req.user.id;
+    const notifs = await db('notifications')
+      .where('user_id', userId)
+      .orWhereNull('user_id')
+      .orderBy('created_at', 'desc')
+      .limit(50);
+    res.json(notifs);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get only unread count (lightweight endpoint for polling)
+notifRouter.get('/unread-count', async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await db('notifications')
+      .where(function () {
+        this.where('user_id', userId).orWhereNull('user_id');
+      })
+      .andWhere('is_read', 0)
+      .count('id as count')
+      .first();
+    res.json({ count: parseInt(result.count) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Create a notification (internal use or admin)
+notifRouter.post('/', async (req, res, next) => {
+  try {
+    const id = uuidv4();
+    await db('notifications').insert({
+      id,
+      user_id: req.body.user_id || null,
+      title: req.body.title,
+      sub: req.body.sub || null,
+      type: req.body.type || 'info',
+      related_url: req.body.related_url || null,
+    });
+    res.status(201).json(await db('notifications').where({ id }).first());
   } catch (err) {
     next(err);
   }
@@ -265,7 +352,12 @@ notifRouter.get('/', async (req, res, next) => {
 
 notifRouter.patch('/mark-all-read', async (req, res, next) => {
   try {
-    await db('notifications').update({ is_read: 1 });
+    const userId = req.user.id;
+    await db('notifications')
+      .where(function () {
+        this.where('user_id', userId).orWhereNull('user_id');
+      })
+      .update({ is_read: 1 });
     res.json({ message: 'All marked as read' });
   } catch (err) {
     next(err);

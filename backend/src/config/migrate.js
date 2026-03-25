@@ -209,13 +209,27 @@ async function migrate() {
     if (!(await db.schema.hasTable('notifications'))) {
       await db.schema.createTable('notifications', t => {
         t.string('id', 36).primary();
+        t.string('user_id', 36).nullable().references('id').inTable('users').onDelete('CASCADE');
         t.string('title', 300).notNullable();
         t.string('sub', 300).nullable();
         t.string('type', 30).defaultTo('info');
+        t.string('related_url', 500).nullable();
         t.boolean('is_read').defaultTo(false);
         t.timestamps(true, true);
+        t.index('user_id');
       });
       console.log('  ✔ notifications');
+    } else {
+      // Add user_id column if missing (for existing installs)
+      const hasCols = await db.schema.hasColumn('notifications', 'user_id');
+      if (!hasCols) {
+        await db.schema.alterTable('notifications', t => {
+          t.string('user_id', 36).nullable().after('id');
+          t.string('related_url', 500).nullable().after('type');
+          t.index('user_id');
+        });
+        console.log('  ✔ notifications (added user_id, related_url)');
+      }
     }
 
     // ── SECURITY FEATURES ──────────────────────

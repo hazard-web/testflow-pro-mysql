@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   useNotifications,
   useMarkRead,
+  useMentionToast,
   useBugs,
   useTestCases,
   useTesters,
@@ -101,6 +102,9 @@ export default function Layout() {
   const projects = projData.data || projData || [];
   const markRead = useMarkRead();
   const unread = notifs.filter(n => !n.is_read).length;
+
+  // Show toast popup when someone @mentions the current user
+  useMentionToast();
 
   const navLinks = [
     { section: 'Overview', items: [{ to: '/dashboard', label: 'Dashboard' }] },
@@ -255,9 +259,19 @@ export default function Layout() {
                 <div
                   key={n.id}
                   className={`notif-item ${!n.is_read ? 'unread' : ''}`}
-                  onClick={() => markRead.mutate(n.id)}
+                  onClick={() => {
+                    markRead.mutate(n.id);
+                    if (n.related_url) {
+                      navigate(n.related_url);
+                      setNotifOpen(false);
+                    }
+                  }}
+                  style={{ cursor: n.related_url ? 'pointer' : 'default' }}
                 >
-                  <div className="notif-item-t">{n.title}</div>
+                  <div className="notif-item-t">
+                    {n.type === 'mention' && '👋 '}
+                    {n.title}
+                  </div>
                   <div className="notif-item-s">
                     {n.sub} · {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                   </div>
