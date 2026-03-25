@@ -466,6 +466,22 @@ userRouter.patch('/profile', async (req, res, next) => {
   }
 });
 
+// Admin-only: update a user's role by email
+userRouter.patch('/update-role', requireAdmin, async (req, res, next) => {
+  try {
+    const { email, role } = req.body;
+    if (!email || !role) return res.status(400).json({ error: 'email and role are required' });
+    const validRoles = ['Admin', 'Manager', 'QA Engineer', 'Lead QA', 'Developer'];
+    if (!validRoles.includes(role)) return res.status(400).json({ error: 'Invalid role', validRoles });
+    const user = await db('users').where({ email }).first();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    await db('users').where({ email }).update({ role, updated_at: new Date() });
+    res.json({ message: `Role updated to ${role}`, email, role });
+  } catch (err) {
+    next(err);
+  }
+});
+
 userRouter.get('/developers', async (req, res, next) => {
   try {
     const devs = await db('developers').orderBy('name');
