@@ -3,7 +3,7 @@
 //  Run:   npm run migrate
 //  Reset: npm run migrate -- --reset
 // ─────────────────────────────────────────────
-require('dotenv').config({ path: `../../../.env.${process.env.NODE_ENV || 'development'}` });
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const db = require('../config/database');
 
 const RESET = process.argv.includes('--reset');
