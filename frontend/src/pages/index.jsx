@@ -3074,6 +3074,8 @@ export function Bugs() {
 //  TESTERS
 // ─────────────────────────────────────────────
 export function Testers() {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { data: testers = [], isLoading } = useTesters();
   const createT = useCreateTester(),
     updateT = useUpdateTester(),
@@ -3127,9 +3129,11 @@ export function Testers() {
           </div>
         </div>
         <div className="topbar-r">
-          <button className="btn btn-sm btn-primary" onClick={() => open()}>
-            + Add Tester
-          </button>
+          {isAdmin && (
+            <button className="btn btn-sm btn-primary" onClick={() => open()}>
+              + Add Tester
+            </button>
+          )}
         </div>
       </div>
       <div className="content">
@@ -3215,16 +3219,18 @@ export function Testers() {
                     <td>
                       <Badge status={t.is_active ? 'Pass' : 'Pending'} />
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn btn-xs" onClick={() => open(t)}>
-                          Edit
-                        </button>
-                        <button className="btn btn-xs btn-danger" onClick={() => setConfirm(t.id)}>
-                          Remove
-                        </button>
-                      </div>
-                    </td>
+                    {isAdmin && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-xs" onClick={() => open(t)}>
+                            Edit
+                          </button>
+                          <button className="btn btn-xs btn-danger" onClick={() => setConfirm(t.id)}>
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -3756,6 +3762,8 @@ export function Projects() {
 //  MANAGERS
 // ─────────────────────────────────────────────
 export function Managers() {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { data: managers = [], isLoading } = useManagers();
   const createM = useCreateManager(),
     updateM = useUpdateManager(),
@@ -3806,9 +3814,11 @@ export function Managers() {
           </div>
         </div>
         <div className="topbar-r">
-          <button className="btn btn-sm btn-primary" onClick={() => open()}>
-            + Add Manager
-          </button>
+          {isAdmin && (
+            <button className="btn btn-sm btn-primary" onClick={() => open()}>
+              + Add Manager
+            </button>
+          )}
         </div>
       </div>
       <div className="content">
@@ -3819,12 +3829,7 @@ export function Managers() {
             delta={`${active} active`}
             deltaType="up"
           />
-          <MetricCard
-            value={active}
-            label="Active Managers"
-            delta="On duty"
-            deltaType="up"
-          />
+          <MetricCard value={active} label="Active Managers" delta="On duty" deltaType="up" />
           <MetricCard
             value={inactive}
             label="Inactive"
@@ -3851,7 +3856,7 @@ export function Managers() {
                   <th>Department</th>
                   <th>Email</th>
                   <th>Status</th>
-                  <th></th>
+                  {isAdmin && <th></th>}
                 </tr>
               </thead>
               <tbody>
@@ -3880,23 +3885,31 @@ export function Managers() {
                       <span className="ptag amber">{m.department || 'QA'}</span>
                     </td>
                     <td>
-                      <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--text3)',
+                          fontFamily: 'var(--font-mono)',
+                        }}
+                      >
                         {m.email || '—'}
                       </span>
                     </td>
                     <td>
                       <Badge status={m.is_active ? 'Pass' : 'Pending'} />
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn btn-xs" onClick={() => open(m)}>
-                          Edit
-                        </button>
-                        <button className="btn btn-xs btn-danger" onClick={() => setConfirm(m.id)}>
-                          Remove
-                        </button>
-                      </div>
-                    </td>
+                    {isAdmin && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-xs" onClick={() => open(m)}>
+                            Edit
+                          </button>
+                          <button className="btn btn-xs btn-danger" onClick={() => setConfirm(m.id)}>
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -4639,9 +4652,7 @@ export function Settings() {
               </div>
             </>
           )}
-          <div className="sec-lbl">
-            {user?.role?.toLowerCase() === 'admin' ? 'Profile' : ''}
-          </div>
+          <div className="sec-lbl">{user?.role?.toLowerCase() === 'admin' ? 'Profile' : ''}</div>
           <div className="card">
             <div className="form-row2">
               <div className="fg">

@@ -23,7 +23,15 @@ managerRouter.get('/', async (req, res, next) => {
   }
 });
 
-managerRouter.post('/', async (req, res, next) => {
+// Admin-only helper
+const requireAdmin = (req, res, next) => {
+  if (req.user.role?.toLowerCase() !== 'admin') {
+    return res.status(403).json({ error: 'Only admins can perform this action' });
+  }
+  next();
+};
+
+managerRouter.post('/', requireAdmin, async (req, res, next) => {
   try {
     const id = uuidv4();
     await db('managers').insert({ id, ...req.body });
@@ -33,7 +41,7 @@ managerRouter.post('/', async (req, res, next) => {
   }
 });
 
-managerRouter.patch('/:id', async (req, res, next) => {
+managerRouter.patch('/:id', requireAdmin, async (req, res, next) => {
   try {
     await db('managers')
       .where({ id: req.params.id })
@@ -46,7 +54,7 @@ managerRouter.patch('/:id', async (req, res, next) => {
   }
 });
 
-managerRouter.delete('/:id', async (req, res, next) => {
+managerRouter.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     await db('managers').where({ id: req.params.id }).del();
     res.json({ message: 'Manager removed' });
@@ -80,7 +88,7 @@ testerRouter.get('/', async (req, res, next) => {
   }
 });
 
-testerRouter.post('/', async (req, res, next) => {
+testerRouter.post('/', requireAdmin, async (req, res, next) => {
   try {
     const id = uuidv4();
     await db('testers').insert({ id, ...req.body });
@@ -90,7 +98,7 @@ testerRouter.post('/', async (req, res, next) => {
   }
 });
 
-testerRouter.patch('/:id', async (req, res, next) => {
+testerRouter.patch('/:id', requireAdmin, async (req, res, next) => {
   try {
     await db('testers')
       .where({ id: req.params.id })
@@ -103,7 +111,7 @@ testerRouter.patch('/:id', async (req, res, next) => {
   }
 });
 
-testerRouter.delete('/:id', async (req, res, next) => {
+testerRouter.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     await db('testers').where({ id: req.params.id }).del();
     res.json({ message: 'Tester removed' });
