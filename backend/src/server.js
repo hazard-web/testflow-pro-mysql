@@ -170,6 +170,17 @@ async function start() {
     await db.raw('SELECT 1');
     logger.info(`✅ Database connected (${process.env.NODE_ENV})`);
 
+    // ── One-time: remove ritikapandey611@gmail.com so she can re-register ──
+    try {
+      const email = 'ritikapandey611@gmail.com';
+      await db('refresh_tokens').whereIn('user_id', db('users').where({ email }).select('id')).del();
+      await db('two_fa_settings').whereIn('user_id', db('users').where({ email }).select('id')).del();
+      await db('audit_logs').whereIn('user_id', db('users').where({ email }).select('id')).del();
+      await db('testers').where({ email }).del();
+      const delUser = await db('users').where({ email }).del();
+      if (delUser > 0) logger.info(`🗑️  Removed user ${email} for re-registration`);
+    } catch (e) { logger.warn('Cleanup note:', e.message); }
+
     // ── Clean up testers table: remove duplicates and non-testers (Admin, Manager) ──
     try {
       // 1. Remove Admin and Manager roles from testers table — they don't belong there
