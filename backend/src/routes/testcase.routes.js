@@ -10,18 +10,21 @@ const multer = require('multer');
 const db = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const { uploadToCloud, deleteFromCloud, isCloudConfigured } = require('../utils/cloudStorage');
 
 // ── MULTER CONFIG ────────────────────────────
 const uploadsDir = path.join(__dirname, '../../uploads/attachments');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
+// Use memoryStorage when Cloudinary is configured (buffer → cloud), otherwise disk
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuidv4()}${ext}`);
   },
 });
+const storage = isCloudConfigured() ? multer.memoryStorage() : diskStorage;
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
@@ -485,22 +488,41 @@ router.post('/:id/attachments', upload.array('files', 10), async (req, res, next
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
-    const records = req.files.map(file => {
+    const useCloud = isCloudConfigured();
+    const records = [];
+
+    for (const file of req.files) {
       const isVideo = file.mimetype.startsWith('video/');
-      return {
+      let filename, url;
+
+      if (useCloud) {
+        // Upload buffer to Cloudinary
+        const cloudResult = await uploadToCloud(file.buffer, file.originalname, file.mimetype);
+        filename = cloudResult.publicId; // Cloudinary public_id for deletion
+        url = cloudResult.url; // Secure URL for display
+      } else {
+        // Disk storage fallback (file already saved by multer)
+        filename = file.filename;
+        url = null;
+      }
+
+      records.push({
         id: uuidv4(),
         tc_id: tcId,
-        filename: file.filename,
+        filename,
         original_name: file.originalname,
         mime_type: file.mimetype,
         size: file.size,
         type: isVideo ? 'recording' : 'screenshot',
         uploaded_by: req.user?.name || req.user?.email || 'Unknown',
-      };
-    });
+        url,
+      });
+    }
 
     await db('test_case_attachments').insert(records);
-    logger.info(`Uploaded ${records.length} attachment(s) for TC ${tcId}`);
+    logger.info(
+      `Uploaded ${records.length} attachment(s) for TC ${tcId}${useCloud ? ' (Cloudinary)' : ' (disk)'}`
+    );
 
     res.status(201).json(records);
   } catch (err) {
@@ -528,9 +550,14 @@ router.delete('/:id/attachments/:attachmentId', async (req, res, next) => {
       .first();
     if (!att) return res.status(404).json({ error: 'Attachment not found' });
 
-    // Delete file from disk
-    const filePath = path.join(uploadsDir, att.filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (att.url && isCloudConfigured()) {
+      // Delete from Cloudinary
+      await deleteFromCloud(att.filename, att.mime_type); // filename stores the Cloudinary public_id
+    } else {
+      // Delete from local disk
+      const filePath = path.join(uploadsDir, att.filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
 
     await db('test_case_attachments').where('id', att.id).del();
     logger.info(`Deleted attachment ${att.id} from TC ${req.params.id}`);

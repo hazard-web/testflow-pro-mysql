@@ -2053,6 +2053,9 @@ export function TestCaseDetail() {
     return apiUrl.replace(/\/api\/?$/, '');
   })();
 
+  // Use R2 public URL when available, otherwise fall back to local disk path
+  const getAttachmentUrl = att => att.url || `${backendBase}/uploads/attachments/${att.filename}`;
+
   const handleFiles = useCallback(
     fileList => {
       const files = Array.from(fileList);
@@ -2417,7 +2420,7 @@ export function TestCaseDetail() {
                 >
                   {attachments.map(att => {
                     const isVideo = att.mime_type?.startsWith('video/');
-                    const fileUrl = `${backendBase}/uploads/attachments/${att.filename}`;
+                    const fileUrl = getAttachmentUrl(att);
                     return (
                       <div
                         key={att.id}
@@ -2547,7 +2550,7 @@ export function TestCaseDetail() {
       {previewAtt &&
         (() => {
           const isVideo = previewAtt.mime_type?.startsWith('video/');
-          const fileUrl = `${backendBase}/uploads/attachments/${previewAtt.filename}`;
+          const fileUrl = getAttachmentUrl(previewAtt);
           return (
             <div
               style={{
