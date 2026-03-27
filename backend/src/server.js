@@ -171,6 +171,46 @@ async function start() {
   try {
     await db.raw('SELECT 1');
     logger.info(`✅ Database connected (${process.env.NODE_ENV})`);
+
+    // ── Sync orphaned users into testers/developers table ──
+    try {
+      const allUsers = await db('users').select('id', 'name', 'email', 'role', 'is_active');
+      const existingTesterEmails = (await db('testers').select('email')).map(t => t.email?.toLowerCase());
+      const existingDevEmails = (await db('developers').select('email')).map(d => d.email?.toLowerCase());
+
+      let synced = 0;
+      for (const user of allUsers) {
+        if (!user.email) continue;
+        const emailLower = user.email.toLowerCase();
+        const initials = user.name ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '??';
+
+        if (user.role === 'Developer' && !existingDevEmails.includes(emailLower)) {
+          await db('developers').insert({
+            id: require('uuid').v4(),
+            name: user.name,
+            email: user.email,
+            initials,
+            avatar_color: 'av-green',
+            specialisation: 'Full Stack',
+          });
+          synced++;
+        } else if (user.role !== 'Developer' && !existingTesterEmails.includes(emailLower)) {
+          await db('testers').insert({
+            id: require('uuid').v4(),
+            name: user.name,
+            email: user.email,
+            initials,
+            avatar_color: 'av-blue',
+            role: user.role || 'QA Engineer',
+          });
+          synced++;
+        }
+      }
+      if (synced > 0) logger.info(`🔄 Synced ${synced} orphaned user(s) into testers/developers`);
+    } catch (syncErr) {
+      logger.warn('⚠️  User sync warning:', syncErr.message);
+    }
+
     app.listen(PORT, () => {
       logger.info(`🚀 TestFlow API running on http://localhost:${PORT}`);
       logger.info(`   Environment : ${process.env.NODE_ENV}`);
