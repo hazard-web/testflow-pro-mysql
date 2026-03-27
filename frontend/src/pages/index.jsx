@@ -2372,11 +2372,19 @@ function ExcelImportModal({ open, onClose, projects, testers }) {
                         alignItems: 'center',
                         gap: 8,
                         padding: '8px 12px',
-                        borderBottom: i < result.testCases.length - 1 ? '1px solid var(--border)' : 'none',
+                        borderBottom:
+                          i < result.testCases.length - 1 ? '1px solid var(--border)' : 'none',
                         fontSize: 12,
                       }}
                     >
-                      <span style={{ color: 'var(--text3)', fontFamily: 'var(--font-mono)', fontSize: 10, width: 20 }}>
+                      <span
+                        style={{
+                          color: 'var(--text3)',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 10,
+                          width: 20,
+                        }}
+                      >
                         {i + 1}
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -2391,7 +2399,9 @@ function ExcelImportModal({ open, onClose, projects, testers }) {
                         >
                           {tc.title}
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--text3)', display: 'flex', gap: 8 }}>
+                        <div
+                          style={{ fontSize: 10, color: 'var(--text3)', display: 'flex', gap: 8 }}
+                        >
                           {tc.module && <span>📁 {tc.module}</span>}
                           <span
                             style={{

@@ -621,24 +621,59 @@ function matchTester(name, testers) {
 // Helper: normalize column headers from the sheet
 function normalizeHeader(h) {
   if (!h) return '';
-  return h.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  return h
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
 }
 
 // Map common header variations to our DB fields
 const HEADER_MAP = {
-  title: 'title', name: 'title', test_case: 'title', test_case_name: 'title', testcase: 'title',
-  tc_name: 'title', tc_title: 'title', test_name: 'title',
-  description: 'description', desc: 'description', details: 'description',
-  module: 'module', component: 'module', area: 'module', feature: 'module', section: 'module',
-  priority: 'priority', prio: 'priority', severity: 'priority',
-  status: 'status', state: 'status',
-  environment: 'environment', env: 'environment',
-  type: 'type', test_type: 'type', category: 'type',
-  tester: 'tester', tester_name: 'tester', assigned_to: 'tester', assignee: 'tester',
-  assigned: 'tester', qa: 'tester', tested_by: 'tester', owner: 'tester',
-  project: 'project', project_name: 'project',
-  steps: 'steps', test_steps: 'steps', steps_to_reproduce: 'steps',
-  expected: 'expected_result', expected_result: 'expected_result', expected_outcome: 'expected_result',
+  title: 'title',
+  name: 'title',
+  test_case: 'title',
+  test_case_name: 'title',
+  testcase: 'title',
+  tc_name: 'title',
+  tc_title: 'title',
+  test_name: 'title',
+  description: 'description',
+  desc: 'description',
+  details: 'description',
+  module: 'module',
+  component: 'module',
+  area: 'module',
+  feature: 'module',
+  section: 'module',
+  priority: 'priority',
+  prio: 'priority',
+  severity: 'priority',
+  status: 'status',
+  state: 'status',
+  environment: 'environment',
+  env: 'environment',
+  type: 'type',
+  test_type: 'type',
+  category: 'type',
+  tester: 'tester',
+  tester_name: 'tester',
+  assigned_to: 'tester',
+  assignee: 'tester',
+  assigned: 'tester',
+  qa: 'tester',
+  tested_by: 'tester',
+  owner: 'tester',
+  project: 'project',
+  project_name: 'project',
+  steps: 'steps',
+  test_steps: 'steps',
+  steps_to_reproduce: 'steps',
+  expected: 'expected_result',
+  expected_result: 'expected_result',
+  expected_outcome: 'expected_result',
 };
 
 // POST /api/test-cases/import/excel — import test cases from Excel/CSV
@@ -670,7 +705,8 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
 
     if (!Object.values(headerMapping).includes('title')) {
       return res.status(400).json({
-        error: 'Could not find a "Title" column. Accepted headers: Title, Name, Test Case, Test Case Name',
+        error:
+          'Could not find a "Title" column. Accepted headers: Title, Name, Test Case, Test Case Name',
         detectedHeaders: rawHeaders,
       });
     }
@@ -682,7 +718,18 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
     const validPriorities = ['Critical', 'High', 'Medium', 'Low'];
     const validStatuses = ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'];
     const validEnvironments = ['Production', 'Staging', 'QA', 'Development', 'UAT'];
-    const validTypes = ['Functional', 'Regression', 'Smoke', 'Integration', 'E2E', 'Performance', 'Security', 'Usability', 'API', 'UI'];
+    const validTypes = [
+      'Functional',
+      'Regression',
+      'Smoke',
+      'Integration',
+      'E2E',
+      'Performance',
+      'Security',
+      'Usability',
+      'API',
+      'UI',
+    ];
 
     const created = [];
     const skipped = [];
@@ -741,7 +788,9 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
       // Normalize environment
       let environment = 'Staging';
       if (mapped.environment) {
-        const match = validEnvironments.find(ve => ve.toLowerCase() === mapped.environment.toLowerCase());
+        const match = validEnvironments.find(
+          ve => ve.toLowerCase() === mapped.environment.toLowerCase()
+        );
         if (match) environment = match;
       }
 
@@ -756,10 +805,15 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
       let stepsJson = '[]';
       if (mapped.steps) {
         // Split numbered steps (e.g. "1. Do X\n2. Do Y")
-        const stepLines = mapped.steps.split(/\n|(?=\d+[.)]\s)/).filter(Boolean).map(s => s.replace(/^\d+[.)]\s*/, '').trim()).filter(Boolean);
+        const stepLines = mapped.steps
+          .split(/\n|(?=\d+[.)]\s)/)
+          .filter(Boolean)
+          .map(s => s.replace(/^\d+[.)]\s*/, '').trim())
+          .filter(Boolean);
         const stepsArr = stepLines.map((action, idx) => ({
           action,
-          expected: idx === stepLines.length - 1 && mapped.expected_result ? mapped.expected_result : '',
+          expected:
+            idx === stepLines.length - 1 && mapped.expected_result ? mapped.expected_result : '',
         }));
         if (stepsArr.length > 0) stepsJson = JSON.stringify(stepsArr);
       }
@@ -805,7 +859,9 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
       }
     }
 
-    logger.info(`Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`);
+    logger.info(
+      `Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`
+    );
 
     res.status(201).json({
       message: `${created.length} test case(s) imported successfully`,
@@ -854,13 +910,23 @@ router.get('/import/template', (req, res) => {
 
   // Set column widths
   ws['!cols'] = [
-    { wch: 35 }, { wch: 50 }, { wch: 18 }, { wch: 10 },
-    { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 18 },
-    { wch: 50 }, { wch: 35 },
+    { wch: 35 },
+    { wch: 50 },
+    { wch: 18 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 50 },
+    { wch: 35 },
   ];
 
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
   res.setHeader('Content-Disposition', 'attachment; filename=testflow-import-template.xlsx');
   res.send(buffer);
 });
