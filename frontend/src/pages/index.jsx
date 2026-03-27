@@ -2444,6 +2444,10 @@ export function TestCaseDetail() {
                               display: 'block',
                             }}
                             muted
+                            onError={e => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                            }}
                           />
                         ) : (
                           <img
@@ -2455,8 +2459,29 @@ export function TestCaseDetail() {
                               objectFit: 'cover',
                               display: 'block',
                             }}
+                            onError={e => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                            }}
                           />
                         )}
+                        <div
+                          style={{
+                            display: 'none',
+                            width: '100%',
+                            height: 100,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--surface)',
+                            color: 'var(--text3)',
+                            fontSize: 11,
+                            flexDirection: 'column',
+                            gap: 4,
+                          }}
+                        >
+                          <span style={{ fontSize: 22 }}>🖼️</span>
+                          <span>File unavailable</span>
+                        </div>
                         <div style={{ padding: '5px 7px' }}>
                           <div
                             style={{

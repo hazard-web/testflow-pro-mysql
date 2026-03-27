@@ -568,4 +568,18 @@ router.delete('/:id/attachments/:attachmentId', async (req, res, next) => {
   }
 });
 
+// DELETE orphaned attachments (no cloud URL, files lost after redeploy)
+router.delete('/cleanup/orphaned-attachments', async (req, res, next) => {
+  try {
+    const deleted = await db('test_case_attachments')
+      .whereNull('url')
+      .orWhere('url', '')
+      .del();
+    logger.info(`Cleaned up ${deleted} orphaned attachment(s)`);
+    res.json({ message: `${deleted} orphaned attachment(s) removed` });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
