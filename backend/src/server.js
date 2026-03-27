@@ -170,6 +170,28 @@ async function start() {
     await db.raw('SELECT 1');
     logger.info(`✅ Database connected (${process.env.NODE_ENV})`);
 
+    // ── One-time: fully remove ritikapandey611@gmail.com ──
+    try {
+      const email = 'ritikapandey611@gmail.com';
+      const user = await db('users').where({ email }).first();
+      if (user) {
+        await db.raw('SET FOREIGN_KEY_CHECKS = 0');
+        await db('refresh_tokens').where('user_id', user.id).del();
+        await db('two_fa_settings').where('user_id', user.id).del();
+        await db('audit_logs').where('user_id', user.id).del();
+        await db('failed_login_attempts').where('user_id', user.id).del();
+        await db('notifications').where('user_id', user.id).del();
+        await db('comments').where('user_id', user.id).del();
+        await db('password_reset_tokens').where('user_id', user.id).del();
+        await db('users').where('id', user.id).del();
+        await db.raw('SET FOREIGN_KEY_CHECKS = 1');
+        logger.info(`🗑️  Fully removed user ${email} from users table`);
+      }
+      // Also remove from testers regardless
+      const delTesters = await db('testers').where({ email }).del();
+      if (delTesters > 0) logger.info(`🗑️  Removed ${delTesters} tester entry(s) for ${email}`);
+    } catch (e) { logger.warn('Cleanup error:', e.message); }
+
     // ── Clean up testers table: remove duplicates and non-testers (Admin, Manager) ──
     try {
       // 1. Remove Admin and Manager roles from testers table — they don't belong there
