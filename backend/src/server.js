@@ -156,6 +156,16 @@ app.use('/api/projects', projectRouter);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 
+// ── Temporary debug endpoint (remove after use) ──
+app.get('/api/debug/check-ritika', async (req, res) => {
+  try {
+    const inUsers = await db('users').where('email', 'ritikapandey611@gmail.com').select('id', 'name', 'email', 'role');
+    const inTesters = await db('testers').where('email', 'ritikapandey611@gmail.com').select('id', 'name', 'email', 'role');
+    const allTesters = await db('testers').select('id', 'name', 'email', 'role');
+    res.json({ inUsers, inTesters, allTesters });
+  } catch (e) { res.json({ error: e.message }); }
+});
+
 // ── 404 handler ──
 app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.url} not found` }));
 
