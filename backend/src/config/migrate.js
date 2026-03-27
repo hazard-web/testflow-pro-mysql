@@ -263,9 +263,21 @@ async function migrate() {
         t.integer('size').unsigned().notNullable();
         t.enum('type', ['screenshot', 'recording']).defaultTo('screenshot');
         t.string('uploaded_by', 100).nullable();
+        t.string('url', 2000).nullable(); // R2 public URL (null = local disk)
         t.timestamp('created_at').defaultTo(db.fn.now());
       });
       console.log('  ✔ test_case_attachments');
+    }
+
+    // Add url column if table exists but column doesn't (migration for existing installs)
+    if (await db.schema.hasTable('test_case_attachments')) {
+      const hasUrl = await db.schema.hasColumn('test_case_attachments', 'url');
+      if (!hasUrl) {
+        await db.schema.alterTable('test_case_attachments', t => {
+          t.string('url', 2000).nullable().after('uploaded_by');
+        });
+        console.log('  ✔ test_case_attachments.url column added');
+      }
     }
 
     // ── SECURITY FEATURES ──────────────────────

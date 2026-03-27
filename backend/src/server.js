@@ -81,7 +81,7 @@ const limiter = rateLimit({
   message: { error: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS' || process.env.NODE_ENV === 'development',
+  skip: req => req.method === 'OPTIONS' || process.env.NODE_ENV === 'development',
 });
 app.use('/api/', limiter);
 

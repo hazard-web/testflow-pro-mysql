@@ -7,21 +7,25 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const XLSX = require('xlsx');
 const db = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const { uploadToCloud, deleteFromCloud, isCloudConfigured } = require('../utils/cloudStorage');
 
 // ── MULTER CONFIG ────────────────────────────
 const uploadsDir = path.join(__dirname, '../../uploads/attachments');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
+// Use memoryStorage when Cloudinary is configured (buffer → cloud), otherwise disk
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${uuidv4()}${ext}`);
   },
 });
+const storage = isCloudConfigured() ? multer.memoryStorage() : diskStorage;
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
@@ -149,6 +153,175 @@ router.get('/', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// ─── EXCEL IMPORT (before /:id to avoid param conflict) ───
+
+const excelUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv',
+    ];
+    if (allowed.includes(file.mimetype) || file.originalname.match(/\.(xlsx|xls|csv)$/i)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+function matchTester(name, testers) {
+  if (!name) return null;
+  const clean = name.trim().toLowerCase();
+  let match = testers.find(t => t.name.toLowerCase() === clean);
+  if (match) return match.id;
+  match = testers.find(t => {
+    const parts = t.name.toLowerCase().split(/\s+/);
+    return parts.some(p => p === clean) || t.name.toLowerCase().includes(clean);
+  });
+  if (match) return match.id;
+  match = testers.find(t => t.email && t.email.toLowerCase() === clean);
+  if (match) return match.id;
+  return null;
+}
+
+function normalizeHeader(h) {
+  if (!h) return '';
+  return h.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+}
+
+const HEADER_MAP = {
+  title: 'title', name: 'title', test_case: 'title', test_case_name: 'title', testcase: 'title',
+  tc_name: 'title', tc_title: 'title', test_name: 'title',
+  description: 'description', desc: 'description', details: 'description',
+  module: 'module', component: 'module', area: 'module', feature: 'module', section: 'module',
+  priority: 'priority', prio: 'priority', severity: 'priority',
+  status: 'status', state: 'status',
+  environment: 'environment', env: 'environment',
+  type: 'type', test_type: 'type', category: 'type',
+  tester: 'tester', tester_name: 'tester', assigned_to: 'tester', assignee: 'tester',
+  assigned: 'tester', qa: 'tester', tested_by: 'tester', owner: 'tester',
+  project: 'project', project_name: 'project',
+  steps: 'steps', test_steps: 'steps', steps_to_reproduce: 'steps',
+  expected: 'expected_result', expected_result: 'expected_result', expected_outcome: 'expected_result',
+};
+
+router.post('/import/excel', excelUpload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
+
+    if (!rawRows || rawRows.length === 0) {
+      return res.status(400).json({ error: 'Excel file is empty or has no data rows' });
+    }
+
+    const rawHeaders = Object.keys(rawRows[0]);
+    const headerMapping = {};
+    rawHeaders.forEach(h => { const n = normalizeHeader(h); if (HEADER_MAP[n]) headerMapping[h] = HEADER_MAP[n]; });
+
+    if (!Object.values(headerMapping).includes('title')) {
+      return res.status(400).json({ error: 'Could not find a "Title" column.', detectedHeaders: rawHeaders });
+    }
+
+    const testers = await db('testers').select('id', 'name', 'email');
+    const projects = await db('projects').select('id', 'name');
+    const validPriorities = ['Critical', 'High', 'Medium', 'Low'];
+    const validStatuses = ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'];
+    const validEnvs = ['Production', 'Staging', 'QA', 'Development', 'UAT'];
+    const validTypes = ['Functional', 'Regression', 'Smoke', 'Integration', 'E2E', 'Performance', 'Security', 'Usability', 'API', 'UI'];
+    const created = [], skipped = [];
+
+    for (let i = 0; i < rawRows.length; i++) {
+      const row = rawRows[i];
+      const mapped = {};
+      Object.entries(headerMapping).forEach(([orig, field]) => { mapped[field] = row[orig]?.toString().trim() || ''; });
+      if (!mapped.title) { skipped.push({ row: i + 2, reason: 'Missing title' }); continue; }
+
+      let tester_id = mapped.tester ? matchTester(mapped.tester, testers) : null;
+      let project_id = req.body.project_id || null;
+      if (mapped.project && !project_id) {
+        const proj = projects.find(p => p.name.toLowerCase() === mapped.project.toLowerCase());
+        if (proj) project_id = proj.id;
+      }
+
+      let priority = 'Medium';
+      if (mapped.priority) {
+        const m = validPriorities.find(v => v.toLowerCase() === mapped.priority.toLowerCase());
+        if (m) priority = m;
+        else if (/^(p0|p1|crit)/i.test(mapped.priority)) priority = 'Critical';
+        else if (/^(p2|high)/i.test(mapped.priority)) priority = 'High';
+        else if (/^(p3|med)/i.test(mapped.priority)) priority = 'Medium';
+        else if (/^(p4|low)/i.test(mapped.priority)) priority = 'Low';
+      }
+
+      let status = 'Pending';
+      if (mapped.status) {
+        const m = validStatuses.find(v => v.toLowerCase() === mapped.status.toLowerCase());
+        if (m) status = m;
+        else if (/pass|passed|success/i.test(mapped.status)) status = 'Pass';
+        else if (/fail|failed/i.test(mapped.status)) status = 'Fail';
+        else if (/progress|wip|running/i.test(mapped.status)) status = 'In Progress';
+        else if (/block/i.test(mapped.status)) status = 'Blocked';
+      }
+
+      let environment = 'Staging';
+      if (mapped.environment) { const m = validEnvs.find(v => v.toLowerCase() === mapped.environment.toLowerCase()); if (m) environment = m; }
+      let type = 'Functional';
+      if (mapped.type) { const m = validTypes.find(v => v.toLowerCase() === mapped.type.toLowerCase()); if (m) type = m; }
+
+      let stepsJson = '[]';
+      if (mapped.steps) {
+        const stepLines = mapped.steps.split(/\n|(?=\d+[.)]\s)/).filter(Boolean).map(s => s.replace(/^\d+[.)]\s*/, '').trim()).filter(Boolean);
+        const stepsArr = stepLines.map((action, idx) => ({
+          action, expected: idx === stepLines.length - 1 && mapped.expected_result ? mapped.expected_result : '',
+        }));
+        if (stepsArr.length > 0) stepsJson = JSON.stringify(stepsArr);
+      }
+
+      const id = uuidv4();
+      await db('test_cases').insert({
+        id, title: mapped.title, project_id, module: mapped.module || null, priority, tester_id,
+        environment, type, description: mapped.description || null, status, steps: stepsJson, created_by: req.user.name,
+      });
+
+      created.push({
+        id, title: mapped.title, priority, status, module: mapped.module || null,
+        tester: tester_id ? testers.find(t => t.id === tester_id)?.name : mapped.tester || null,
+        testerMatched: !!tester_id,
+      });
+    }
+
+    if (created.length > 0) {
+      try { await db('notifications').insert({ id: uuidv4(), title: `${created.length} test case(s) imported`, sub: `From ${req.file.originalname}`, type: 'info' }); } catch (e) { /* silent */ }
+    }
+
+    logger.info(`Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`);
+    res.status(201).json({ message: `${created.length} test case(s) imported successfully`, created: created.length, skipped: skipped.length, skippedDetails: skipped, testCases: created });
+  } catch (err) {
+    logger.error('Excel import error:', err.message);
+    next(err);
+  }
+});
+
+router.get('/import/template', (req, res) => {
+  const templateData = [
+    { Title: 'Login with valid credentials', Description: 'Verify user can login with correct email and password', Module: 'Authentication', Priority: 'High', Status: 'Pending', Environment: 'Staging', Type: 'Functional', Tester: 'John Doe', Steps: '1. Go to login page\n2. Enter valid email\n3. Enter valid password\n4. Click Login', 'Expected Result': 'User is redirected to dashboard' },
+    { Title: 'Search functionality', Description: 'Verify search returns relevant results', Module: 'Search', Priority: 'Medium', Status: 'Pending', Environment: 'Staging', Type: 'Functional', Tester: '', Steps: '1. Click search bar\n2. Type keyword\n3. Press Enter', 'Expected Result': 'Relevant results are displayed' },
+  ];
+  const ws = XLSX.utils.json_to_sheet(templateData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Test Cases');
+  ws['!cols'] = [{ wch: 35 }, { wch: 50 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 50 }, { wch: 35 }];
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=testflow-import-template.xlsx');
+  res.send(buffer);
 });
 
 // GET single test case
@@ -485,22 +658,41 @@ router.post('/:id/attachments', upload.array('files', 10), async (req, res, next
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
-    const records = req.files.map(file => {
+    const useCloud = isCloudConfigured();
+    const records = [];
+
+    for (const file of req.files) {
       const isVideo = file.mimetype.startsWith('video/');
-      return {
+      let filename, url;
+
+      if (useCloud) {
+        // Upload buffer to Cloudinary
+        const cloudResult = await uploadToCloud(file.buffer, file.originalname, file.mimetype);
+        filename = cloudResult.publicId; // Cloudinary public_id for deletion
+        url = cloudResult.url; // Secure URL for display
+      } else {
+        // Disk storage fallback (file already saved by multer)
+        filename = file.filename;
+        url = null;
+      }
+
+      records.push({
         id: uuidv4(),
         tc_id: tcId,
-        filename: file.filename,
+        filename,
         original_name: file.originalname,
         mime_type: file.mimetype,
         size: file.size,
         type: isVideo ? 'recording' : 'screenshot',
         uploaded_by: req.user?.name || req.user?.email || 'Unknown',
-      };
-    });
+        url,
+      });
+    }
 
     await db('test_case_attachments').insert(records);
-    logger.info(`Uploaded ${records.length} attachment(s) for TC ${tcId}`);
+    logger.info(
+      `Uploaded ${records.length} attachment(s) for TC ${tcId}${useCloud ? ' (Cloudinary)' : ' (disk)'}`
+    );
 
     res.status(201).json(records);
   } catch (err) {
@@ -528,14 +720,30 @@ router.delete('/:id/attachments/:attachmentId', async (req, res, next) => {
       .first();
     if (!att) return res.status(404).json({ error: 'Attachment not found' });
 
-    // Delete file from disk
-    const filePath = path.join(uploadsDir, att.filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (att.url && isCloudConfigured()) {
+      // Delete from Cloudinary
+      await deleteFromCloud(att.filename, att.mime_type); // filename stores the Cloudinary public_id
+    } else {
+      // Delete from local disk
+      const filePath = path.join(uploadsDir, att.filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
 
     await db('test_case_attachments').where('id', att.id).del();
     logger.info(`Deleted attachment ${att.id} from TC ${req.params.id}`);
 
     res.json({ message: 'Attachment deleted' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE orphaned attachments (no cloud URL, files lost after redeploy)
+router.delete('/cleanup/orphaned-attachments', async (req, res, next) => {
+  try {
+    const deleted = await db('test_case_attachments').whereNull('url').orWhere('url', '').del();
+    logger.info(`Cleaned up ${deleted} orphaned attachment(s)`);
+    res.json({ message: `${deleted} orphaned attachment(s) removed` });
   } catch (err) {
     next(err);
   }

@@ -471,3 +471,27 @@ export const useDeleteAttachment = () => {
     onError: onErr,
   });
 };
+
+// ── EXCEL IMPORT ─────────────────────────────
+export const useImportExcel = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, project_id }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (project_id) formData.append('project_id', project_id);
+      return api
+        .post('/test-cases/import/excel', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000,
+        })
+        .then(r => r.data);
+    },
+    onSuccess: data => {
+      qc.invalidateQueries({ queryKey: ['test-cases'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success(`${data.created} test case(s) imported`);
+    },
+    onError: onErr,
+  });
+};
