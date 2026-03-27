@@ -162,6 +162,27 @@ router.post(
         is_active: true,
       });
 
+      // Also add to the appropriate team table so they appear in testers/developers lists
+      if (team_type === 'developer') {
+        await db('developers').insert({
+          id: uuidv4(),
+          name,
+          email,
+          initials,
+          avatar_color: 'av-green',
+          specialisation: 'Full Stack',
+        });
+      } else {
+        await db('testers').insert({
+          id: uuidv4(),
+          name,
+          email,
+          initials,
+          avatar_color: 'av-blue',
+          role: userRole,
+        });
+      }
+
       // Create 2FA settings (disabled by default)
       await db('two_fa_settings').insert({
         id: uuidv4(),
