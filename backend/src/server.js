@@ -172,41 +172,82 @@ async function start() {
     await db.raw('SELECT 1');
     logger.info(`✅ Database connected (${process.env.NODE_ENV})`);
 
-    // ── Sync orphaned users into testers/developers table ──
+    // ── Clean up testers table: remove duplicates and non-testers (Admin, Manager) ──
     try {
-      const allUsers = await db('users').select('id', 'name', 'email', 'role', 'is_active');
+      // 1. Remove Admin and Manager roles from testers table — they don't belong there
+      const removedRoles = await db('testers')
+        .whereIn('role', ['Admin', 'Manager'])
+        .del();
+      if (removedRoles > 0) logger.info(`🧹 Removed ${removedRoles} Admin/Manager entries from testers`);
+
+      // Also remove testers whose email belongs to an Admin or Manager in users table
+      const adminManagerEmails = (await db('users')
+        .whereIn('role', ['Admin', 'Manager'])
+        .select('email'))
+        .map(u => u.email)
+        .filter(Boolean);
+      if (adminManagerEmails.length > 0) {
+        const removedByEmail = await db('testers').whereIn('email', adminManagerEmails).del();
+        if (removedByEmail > 0) logger.info(`🧹 Removed ${removedByEmail} admin/manager user(s) from testers by email`);
+      }
+
+      // 2. Remove duplicate testers (keep only the first entry per email)
+      const dupes = await db('testers')
+        .select('email')
+        .groupBy('email')
+        .havingRaw('COUNT(*) > 1');
+      for (const { email } of dupes) {
+        if (!email) continue;
+        const rows = await db('testers').where({ email }).orderBy('created_at', 'asc');
+        if (rows.length > 1) {
+          const idsToDelete = rows.slice(1).map(r => r.id);
+          await db('testers').whereIn('id', idsToDelete).del();
+          logger.info(`🧹 Removed ${idsToDelete.length} duplicate tester(s) for ${email}`);
+        }
+      }
+
+      // 3. Sync only QA Engineers / Lead QA who are missing from testers
+      const qaUsers = await db('users')
+        .whereNotIn('role', ['Admin', 'Manager', 'Developer'])
+        .select('id', 'name', 'email', 'role');
       const existingTesterEmails = (await db('testers').select('email')).map(t => t.email?.toLowerCase());
       const existingDevEmails = (await db('developers').select('email')).map(d => d.email?.toLowerCase());
 
       let synced = 0;
-      for (const user of allUsers) {
+      for (const user of qaUsers) {
         if (!user.email) continue;
         const emailLower = user.email.toLowerCase();
+        if (existingTesterEmails.includes(emailLower)) continue;
         const initials = user.name ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '??';
-
-        if (user.role === 'Developer' && !existingDevEmails.includes(emailLower)) {
-          await db('developers').insert({
-            id: require('uuid').v4(),
-            name: user.name,
-            email: user.email,
-            initials,
-            avatar_color: 'av-green',
-            specialisation: 'Full Stack',
-          });
-          synced++;
-        } else if (user.role !== 'Developer' && !existingTesterEmails.includes(emailLower)) {
-          await db('testers').insert({
-            id: require('uuid').v4(),
-            name: user.name,
-            email: user.email,
-            initials,
-            avatar_color: 'av-blue',
-            role: user.role || 'QA Engineer',
-          });
-          synced++;
-        }
+        await db('testers').insert({
+          id: require('uuid').v4(),
+          name: user.name,
+          email: user.email,
+          initials,
+          avatar_color: 'av-blue',
+          role: user.role || 'QA Engineer',
+        });
+        synced++;
       }
-      if (synced > 0) logger.info(`🔄 Synced ${synced} orphaned user(s) into testers/developers`);
+
+      // Also sync developers who are missing
+      const devUsers = await db('users').where({ role: 'Developer' }).select('id', 'name', 'email');
+      for (const user of devUsers) {
+        if (!user.email) continue;
+        if (existingDevEmails.includes(user.email.toLowerCase())) continue;
+        const initials = user.name ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '??';
+        await db('developers').insert({
+          id: require('uuid').v4(),
+          name: user.name,
+          email: user.email,
+          initials,
+          avatar_color: 'av-green',
+          specialisation: 'Full Stack',
+        });
+        synced++;
+      }
+
+      if (synced > 0) logger.info(`🔄 Synced ${synced} missing user(s) into testers/developers`);
     } catch (syncErr) {
       logger.warn('⚠️  User sync warning:', syncErr.message);
     }
