@@ -48,6 +48,7 @@ import {
   useUploadAttachment,
   useDeleteAttachment,
   useUsers,
+  useImportExcel,
 } from '../hooks/useData';
 import {
   exportToCSV,
@@ -1570,6 +1571,7 @@ export function TestCases() {
   const [aiModal, setAIModal] = useState(false);
   const [bulkModal, setBulkModal] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  const [importModal, setImportModal] = useState(false);
   const [form, setForm] = useState({
     title: '',
     project_id: '',
@@ -1728,6 +1730,9 @@ export function TestCases() {
           </button>
           <button className="btn btn-sm" onClick={() => setAIModal(true)}>
             🤖 AI Generate
+          </button>
+          <button className="btn btn-sm" onClick={() => setImportModal(true)}>
+            📥 Import Excel
           </button>
           <button className="btn btn-sm btn-primary" onClick={openCreate}>
             + Create
@@ -2005,6 +2010,447 @@ export function TestCases() {
           setTCModal(true);
         }}
       />
+
+      {/* Excel Import Modal */}
+      {importModal && (
+        <ExcelImportModal
+          open={importModal}
+          onClose={() => setImportModal(false)}
+          projects={projects}
+          testers={testers}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  EXCEL IMPORT MODAL
+// ─────────────────────────────────────────────
+function ExcelImportModal({ open, onClose, projects, testers }) {
+  const [file, setFile] = useState(null);
+  const [projectId, setProjectId] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const [result, setResult] = useState(null);
+  const fileRef = useRef(null);
+  const importExcel = useImportExcel();
+  const apiBase = api.defaults.baseURL || '/api';
+
+  const handleFile = f => {
+    if (f && /\.(xlsx|xls|csv)$/i.test(f.name)) {
+      setFile(f);
+      setResult(null);
+    } else {
+      toast.error('Please select an Excel (.xlsx, .xls) or CSV file');
+    }
+  };
+
+  const doImport = async () => {
+    if (!file) return;
+    try {
+      const res = await importExcel.mutateAsync({ file, project_id: projectId || undefined });
+      setResult(res);
+    } catch {
+      // error handled by hook
+    }
+  };
+
+  const downloadTemplate = () => {
+    const link = document.createElement('a');
+    link.href = `${apiBase}/test-cases/import/template`;
+    const token = localStorage.getItem('access_token');
+    // Use fetch to download with auth
+    fetch(`${apiBase}/test-cases/import/template`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = 'testflow-import-template.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(() => toast.error('Failed to download template'));
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9998,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--card)',
+          borderRadius: 'var(--r8)',
+          border: '1px solid var(--border)',
+          width: '100%',
+          maxWidth: 560,
+          maxHeight: '90vh',
+          overflow: 'auto',
+          padding: 0,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', margin: 0 }}>
+              📥 Import Test Cases from Excel
+            </h3>
+            <p style={{ fontSize: 11, color: 'var(--text3)', margin: '4px 0 0' }}>
+              Upload .xlsx, .xls, or .csv — testers are auto-matched by name
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: 18,
+              cursor: 'pointer',
+              color: 'var(--text3)',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ padding: '16px 20px' }}>
+          {!result ? (
+            <>
+              {/* Template download */}
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--r6)',
+                  padding: '10px 14px',
+                  marginBottom: 14,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)' }}>
+                    📋 Need a template?
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)' }}>
+                    Download our sample Excel with the correct columns
+                  </div>
+                </div>
+                <button className="btn btn-sm" onClick={downloadTemplate}>
+                  ↓ Template
+                </button>
+              </div>
+
+              {/* Drop zone */}
+              <div
+                onDragOver={e => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={e => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  handleFile(e.dataTransfer.files[0]);
+                }}
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border2)'}`,
+                  borderRadius: 'var(--r8)',
+                  padding: '28px 20px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  background: dragOver ? 'var(--accent-bg)' : 'var(--surface)',
+                  transition: 'all 0.2s',
+                  marginBottom: 14,
+                }}
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  style={{ display: 'none' }}
+                  onChange={e => handleFile(e.target.files[0])}
+                />
+                {file ? (
+                  <div>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>📊</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                      {file.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--text3)',
+                        fontFamily: 'var(--font-mono)',
+                        marginTop: 2,
+                      }}
+                    >
+                      {(file.size / 1024).toFixed(1)} KB · Click to change
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 32, marginBottom: 6 }}>📂</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
+                      Drop your Excel file here
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
+                      or click to browse · .xlsx, .xls, .csv
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Project selector */}
+              <div style={{ marginBottom: 14 }}>
+                <label
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: 'var(--text2)',
+                    display: 'block',
+                    marginBottom: 4,
+                  }}
+                >
+                  Assign to Project (optional)
+                </label>
+                <select
+                  className="form-input"
+                  value={projectId}
+                  onChange={e => setProjectId(e.target.value)}
+                  style={{ fontSize: 12 }}
+                >
+                  <option value="">— Auto-detect from sheet or none —</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Column info */}
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  borderRadius: 'var(--r6)',
+                  padding: '10px 14px',
+                  marginBottom: 16,
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <div
+                  style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }}
+                >
+                  Supported columns:
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 4,
+                    fontSize: 10,
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  {[
+                    'Title*',
+                    'Description',
+                    'Module',
+                    'Priority',
+                    'Status',
+                    'Environment',
+                    'Type',
+                    'Tester',
+                    'Steps',
+                    'Expected Result',
+                  ].map(col => (
+                    <span
+                      key={col}
+                      style={{
+                        background: col.includes('*') ? 'var(--accent)' : 'var(--bg)',
+                        color: col.includes('*') ? '#fff' : 'var(--text2)',
+                        padding: '2px 7px',
+                        borderRadius: 'var(--r4)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      {col}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 6 }}>
+                  ✨ <strong>Tester</strong> column auto-matches names to your existing testers.
+                  Available:{' '}
+                  {testers.length > 0
+                    ? testers.map(t => t.name).join(', ')
+                    : 'No testers added yet'}
+                </div>
+              </div>
+
+              {/* Import button */}
+              <button
+                className="btn btn-primary"
+                onClick={doImport}
+                disabled={!file || importExcel.isPending}
+                style={{ width: '100%', padding: '10px 0', fontSize: 13 }}
+              >
+                {importExcel.isPending ? (
+                  <>
+                    <span
+                      className="spinner"
+                      style={{ width: 14, height: 14, display: 'inline-block', marginRight: 8 }}
+                    />{' '}
+                    Importing…
+                  </>
+                ) : (
+                  `📥 Import ${file ? file.name : 'Test Cases'}`
+                )}
+              </button>
+            </>
+          ) : (
+            /* Results */
+            <div>
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '16px 0 12px',
+                }}
+              >
+                <div style={{ fontSize: 40, marginBottom: 8 }}>
+                  {result.created > 0 ? '🎉' : '⚠️'}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>
+                  {result.created} Test Case{result.created !== 1 ? 's' : ''} Imported
+                </div>
+                {result.skipped > 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
+                    {result.skipped} row(s) skipped
+                  </div>
+                )}
+              </div>
+
+              {/* Imported TCs summary */}
+              {result.testCases && result.testCases.length > 0 && (
+                <div
+                  style={{
+                    maxHeight: 240,
+                    overflow: 'auto',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r6)',
+                    marginBottom: 14,
+                  }}
+                >
+                  {result.testCases.map((tc, i) => (
+                    <div
+                      key={tc.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 12px',
+                        borderBottom: i < result.testCases.length - 1 ? '1px solid var(--border)' : 'none',
+                        fontSize: 12,
+                      }}
+                    >
+                      <span style={{ color: 'var(--text3)', fontFamily: 'var(--font-mono)', fontSize: 10, width: 20 }}>
+                        {i + 1}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: 500,
+                            color: 'var(--text)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {tc.title}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--text3)', display: 'flex', gap: 8 }}>
+                          {tc.module && <span>📁 {tc.module}</span>}
+                          <span
+                            style={{
+                              color: tc.testerMatched ? 'var(--green)' : 'var(--text3)',
+                            }}
+                          >
+                            {tc.tester
+                              ? `${tc.testerMatched ? '✅' : '⚠️'} ${tc.tester}`
+                              : '— no tester'}
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={`badge badge-${tc.priority === 'Critical' ? 'fail' : tc.priority === 'High' ? 'fail' : 'pass'}`}
+                        style={{ fontSize: 9 }}
+                      >
+                        {tc.priority}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Skipped rows */}
+              {result.skippedDetails && result.skippedDetails.length > 0 && (
+                <div
+                  style={{
+                    background: 'var(--surface)',
+                    borderRadius: 'var(--r6)',
+                    padding: '8px 12px',
+                    marginBottom: 14,
+                    fontSize: 11,
+                    color: 'var(--text3)',
+                  }}
+                >
+                  <strong>Skipped rows:</strong>{' '}
+                  {result.skippedDetails.map(s => `Row ${s.row} (${s.reason})`).join(', ')}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setFile(null);
+                    setResult(null);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Import More
+                </button>
+                <button className="btn btn-primary" onClick={onClose} style={{ flex: 1 }}>
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

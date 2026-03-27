@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const XLSX = require('xlsx');
 const db = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 const logger = require('../utils/logger');
@@ -571,15 +572,297 @@ router.delete('/:id/attachments/:attachmentId', async (req, res, next) => {
 // DELETE orphaned attachments (no cloud URL, files lost after redeploy)
 router.delete('/cleanup/orphaned-attachments', async (req, res, next) => {
   try {
-    const deleted = await db('test_case_attachments')
-      .whereNull('url')
-      .orWhere('url', '')
-      .del();
+    const deleted = await db('test_case_attachments').whereNull('url').orWhere('url', '').del();
     logger.info(`Cleaned up ${deleted} orphaned attachment(s)`);
     res.json({ message: `${deleted} orphaned attachment(s) removed` });
   } catch (err) {
     next(err);
   }
+});
+
+// ─── EXCEL IMPORT ────────────────────────────
+
+const excelUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv',
+    ];
+    if (allowed.includes(file.mimetype) || file.originalname.match(/\.(xlsx|xls|csv)$/i)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+});
+
+// Helper: fuzzy match a tester name from the sheet to an existing tester
+function matchTester(name, testers) {
+  if (!name) return null;
+  const clean = name.trim().toLowerCase();
+  // Exact match
+  let match = testers.find(t => t.name.toLowerCase() === clean);
+  if (match) return match.id;
+  // Partial match (first name or last name)
+  match = testers.find(t => {
+    const parts = t.name.toLowerCase().split(/\s+/);
+    return parts.some(p => p === clean) || t.name.toLowerCase().includes(clean);
+  });
+  if (match) return match.id;
+  // Email match
+  match = testers.find(t => t.email && t.email.toLowerCase() === clean);
+  if (match) return match.id;
+  return null;
+}
+
+// Helper: normalize column headers from the sheet
+function normalizeHeader(h) {
+  if (!h) return '';
+  return h.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+}
+
+// Map common header variations to our DB fields
+const HEADER_MAP = {
+  title: 'title', name: 'title', test_case: 'title', test_case_name: 'title', testcase: 'title',
+  tc_name: 'title', tc_title: 'title', test_name: 'title',
+  description: 'description', desc: 'description', details: 'description',
+  module: 'module', component: 'module', area: 'module', feature: 'module', section: 'module',
+  priority: 'priority', prio: 'priority', severity: 'priority',
+  status: 'status', state: 'status',
+  environment: 'environment', env: 'environment',
+  type: 'type', test_type: 'type', category: 'type',
+  tester: 'tester', tester_name: 'tester', assigned_to: 'tester', assignee: 'tester',
+  assigned: 'tester', qa: 'tester', tested_by: 'tester', owner: 'tester',
+  project: 'project', project_name: 'project',
+  steps: 'steps', test_steps: 'steps', steps_to_reproduce: 'steps',
+  expected: 'expected_result', expected_result: 'expected_result', expected_outcome: 'expected_result',
+};
+
+// POST /api/test-cases/import/excel — import test cases from Excel/CSV
+router.post('/import/excel', excelUpload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Parse Excel
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    if (!rawRows || rawRows.length === 0) {
+      return res.status(400).json({ error: 'Excel file is empty or has no data rows' });
+    }
+
+    // Map headers
+    const rawHeaders = Object.keys(rawRows[0]);
+    const headerMapping = {};
+    rawHeaders.forEach(h => {
+      const norm = normalizeHeader(h);
+      if (HEADER_MAP[norm]) {
+        headerMapping[h] = HEADER_MAP[norm];
+      }
+    });
+
+    if (!Object.values(headerMapping).includes('title')) {
+      return res.status(400).json({
+        error: 'Could not find a "Title" column. Accepted headers: Title, Name, Test Case, Test Case Name',
+        detectedHeaders: rawHeaders,
+      });
+    }
+
+    // Load testers & projects for auto-matching
+    const testers = await db('testers').select('id', 'name', 'email');
+    const projects = await db('projects').select('id', 'name');
+
+    const validPriorities = ['Critical', 'High', 'Medium', 'Low'];
+    const validStatuses = ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'];
+    const validEnvironments = ['Production', 'Staging', 'QA', 'Development', 'UAT'];
+    const validTypes = ['Functional', 'Regression', 'Smoke', 'Integration', 'E2E', 'Performance', 'Security', 'Usability', 'API', 'UI'];
+
+    const created = [];
+    const skipped = [];
+
+    for (let i = 0; i < rawRows.length; i++) {
+      const row = rawRows[i];
+      const mapped = {};
+      Object.entries(headerMapping).forEach(([orig, field]) => {
+        mapped[field] = row[orig]?.toString().trim() || '';
+      });
+
+      // Skip rows without a title
+      if (!mapped.title) {
+        skipped.push({ row: i + 2, reason: 'Missing title' });
+        continue;
+      }
+
+      // Auto-match tester
+      let tester_id = null;
+      if (mapped.tester) {
+        tester_id = matchTester(mapped.tester, testers);
+      }
+
+      // Auto-match project
+      let project_id = req.body.project_id || null;
+      if (mapped.project && !project_id) {
+        const projClean = mapped.project.toLowerCase();
+        const proj = projects.find(p => p.name.toLowerCase() === projClean);
+        if (proj) project_id = proj.id;
+      }
+
+      // Normalize priority
+      let priority = 'Medium';
+      if (mapped.priority) {
+        const p = mapped.priority;
+        const match = validPriorities.find(vp => vp.toLowerCase() === p.toLowerCase());
+        if (match) priority = match;
+        else if (/^(p0|p1|crit)/i.test(p)) priority = 'Critical';
+        else if (/^(p2|high)/i.test(p)) priority = 'High';
+        else if (/^(p3|med)/i.test(p)) priority = 'Medium';
+        else if (/^(p4|low)/i.test(p)) priority = 'Low';
+      }
+
+      // Normalize status
+      let status = 'Pending';
+      if (mapped.status) {
+        const s = mapped.status;
+        const match = validStatuses.find(vs => vs.toLowerCase() === s.toLowerCase());
+        if (match) status = match;
+        else if (/pass|passed|success/i.test(s)) status = 'Pass';
+        else if (/fail|failed/i.test(s)) status = 'Fail';
+        else if (/progress|wip|running/i.test(s)) status = 'In Progress';
+        else if (/block/i.test(s)) status = 'Blocked';
+      }
+
+      // Normalize environment
+      let environment = 'Staging';
+      if (mapped.environment) {
+        const match = validEnvironments.find(ve => ve.toLowerCase() === mapped.environment.toLowerCase());
+        if (match) environment = match;
+      }
+
+      // Normalize type
+      let type = 'Functional';
+      if (mapped.type) {
+        const match = validTypes.find(vt => vt.toLowerCase() === mapped.type.toLowerCase());
+        if (match) type = match;
+      }
+
+      // Build steps from "steps" and "expected_result" columns
+      let stepsJson = '[]';
+      if (mapped.steps) {
+        // Split numbered steps (e.g. "1. Do X\n2. Do Y")
+        const stepLines = mapped.steps.split(/\n|(?=\d+[.)]\s)/).filter(Boolean).map(s => s.replace(/^\d+[.)]\s*/, '').trim()).filter(Boolean);
+        const stepsArr = stepLines.map((action, idx) => ({
+          action,
+          expected: idx === stepLines.length - 1 && mapped.expected_result ? mapped.expected_result : '',
+        }));
+        if (stepsArr.length > 0) stepsJson = JSON.stringify(stepsArr);
+      }
+
+      const id = uuidv4();
+      await db('test_cases').insert({
+        id,
+        title: mapped.title,
+        project_id,
+        module: mapped.module || null,
+        priority,
+        tester_id,
+        environment,
+        type,
+        description: mapped.description || null,
+        status,
+        steps: stepsJson,
+        created_by: req.user.name,
+      });
+
+      created.push({
+        id,
+        title: mapped.title,
+        tester: tester_id ? testers.find(t => t.id === tester_id)?.name : mapped.tester || null,
+        testerMatched: !!tester_id,
+        priority,
+        status,
+        module: mapped.module || null,
+      });
+    }
+
+    // Create a single notification
+    if (created.length > 0) {
+      try {
+        await db('notifications').insert({
+          id: uuidv4(),
+          title: `${created.length} test case(s) imported`,
+          sub: `From ${req.file.originalname}`,
+          type: 'info',
+        });
+      } catch (e) {
+        // Silently handle
+      }
+    }
+
+    logger.info(`Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`);
+
+    res.status(201).json({
+      message: `${created.length} test case(s) imported successfully`,
+      created: created.length,
+      skipped: skipped.length,
+      skippedDetails: skipped,
+      testCases: created,
+    });
+  } catch (err) {
+    logger.error('Excel import error:', err.message);
+    next(err);
+  }
+});
+
+// GET /api/test-cases/import/template — download a sample Excel template
+router.get('/import/template', (req, res) => {
+  const templateData = [
+    {
+      Title: 'Login with valid credentials',
+      Description: 'Verify user can login with correct email and password',
+      Module: 'Authentication',
+      Priority: 'High',
+      Status: 'Pending',
+      Environment: 'Staging',
+      Type: 'Functional',
+      Tester: 'John Doe',
+      Steps: '1. Go to login page\n2. Enter valid email\n3. Enter valid password\n4. Click Login',
+      'Expected Result': 'User is redirected to dashboard',
+    },
+    {
+      Title: 'Search functionality',
+      Description: 'Verify search returns relevant results',
+      Module: 'Search',
+      Priority: 'Medium',
+      Status: 'Pending',
+      Environment: 'Staging',
+      Type: 'Functional',
+      Tester: '',
+      Steps: '1. Click search bar\n2. Type keyword\n3. Press Enter',
+      'Expected Result': 'Relevant results are displayed',
+    },
+  ];
+  const ws = XLSX.utils.json_to_sheet(templateData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Test Cases');
+
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 35 }, { wch: 50 }, { wch: 18 }, { wch: 10 },
+    { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 18 },
+    { wch: 50 }, { wch: 35 },
+  ];
+
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=testflow-import-template.xlsx');
+  res.send(buffer);
 });
 
 module.exports = router;
