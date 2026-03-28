@@ -173,27 +173,24 @@ async function start() {
     // ── Clean up testers table: remove duplicates and non-testers (Admin, Manager) ──
     try {
       // 1. Remove Admin and Manager roles from testers table — they don't belong there
-      const removedRoles = await db('testers')
-        .whereIn('role', ['Admin', 'Manager'])
-        .del();
-      if (removedRoles > 0) logger.info(`🧹 Removed ${removedRoles} Admin/Manager entries from testers`);
+      const removedRoles = await db('testers').whereIn('role', ['Admin', 'Manager']).del();
+      if (removedRoles > 0)
+        logger.info(`🧹 Removed ${removedRoles} Admin/Manager entries from testers`);
 
       // Also remove testers whose email belongs to an Admin or Manager in users table
-      const adminManagerEmails = (await db('users')
-        .whereIn('role', ['Admin', 'Manager'])
-        .select('email'))
+      const adminManagerEmails = (
+        await db('users').whereIn('role', ['Admin', 'Manager']).select('email')
+      )
         .map(u => u.email)
         .filter(Boolean);
       if (adminManagerEmails.length > 0) {
         const removedByEmail = await db('testers').whereIn('email', adminManagerEmails).del();
-        if (removedByEmail > 0) logger.info(`🧹 Removed ${removedByEmail} admin/manager user(s) from testers by email`);
+        if (removedByEmail > 0)
+          logger.info(`🧹 Removed ${removedByEmail} admin/manager user(s) from testers by email`);
       }
 
       // 2. Remove duplicate testers (keep only the first entry per email)
-      const dupes = await db('testers')
-        .select('email')
-        .groupBy('email')
-        .havingRaw('COUNT(*) > 1');
+      const dupes = await db('testers').select('email').groupBy('email').havingRaw('COUNT(*) > 1');
       for (const { email } of dupes) {
         if (!email) continue;
         const rows = await db('testers').where({ email }).orderBy('created_at', 'asc');
@@ -208,15 +205,26 @@ async function start() {
       const qaUsers = await db('users')
         .whereNotIn('role', ['Admin', 'Manager', 'Developer'])
         .select('id', 'name', 'email', 'role');
-      const existingTesterEmails = (await db('testers').select('email')).map(t => t.email?.toLowerCase());
-      const existingDevEmails = (await db('developers').select('email')).map(d => d.email?.toLowerCase());
+      const existingTesterEmails = (await db('testers').select('email')).map(t =>
+        t.email?.toLowerCase()
+      );
+      const existingDevEmails = (await db('developers').select('email')).map(d =>
+        d.email?.toLowerCase()
+      );
 
       let synced = 0;
       for (const user of qaUsers) {
         if (!user.email) continue;
         const emailLower = user.email.toLowerCase();
         if (existingTesterEmails.includes(emailLower)) continue;
-        const initials = user.name ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '??';
+        const initials = user.name
+          ? user.name
+              .split(' ')
+              .map(w => w[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)
+          : '??';
         await db('testers').insert({
           id: require('uuid').v4(),
           name: user.name,
@@ -233,7 +241,14 @@ async function start() {
       for (const user of devUsers) {
         if (!user.email) continue;
         if (existingDevEmails.includes(user.email.toLowerCase())) continue;
-        const initials = user.name ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '??';
+        const initials = user.name
+          ? user.name
+              .split(' ')
+              .map(w => w[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)
+          : '??';
         await db('developers').insert({
           id: require('uuid').v4(),
           name: user.name,
