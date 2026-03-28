@@ -191,23 +191,108 @@ function matchTester(name, testers) {
 
 function normalizeHeader(h) {
   if (!h) return '';
-  return h.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  return h
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
 }
 
 const HEADER_MAP = {
-  title: 'title', name: 'title', test_case: 'title', test_case_name: 'title', testcase: 'title',
-  tc_name: 'title', tc_title: 'title', test_name: 'title',
-  description: 'description', desc: 'description', details: 'description',
-  module: 'module', component: 'module', area: 'module', feature: 'module', section: 'module',
-  priority: 'priority', prio: 'priority', severity: 'priority',
-  status: 'status', state: 'status',
-  environment: 'environment', env: 'environment',
-  type: 'type', test_type: 'type', category: 'type',
-  tester: 'tester', tester_name: 'tester', assigned_to: 'tester', assignee: 'tester',
-  assigned: 'tester', qa: 'tester', tested_by: 'tester', owner: 'tester',
-  project: 'project', project_name: 'project',
-  steps: 'steps', test_steps: 'steps', steps_to_reproduce: 'steps',
-  expected: 'expected_result', expected_result: 'expected_result', expected_outcome: 'expected_result',
+  // Title variations
+  title: 'title',
+  name: 'title',
+  test_case: 'title',
+  test_case_name: 'title',
+  test_case_title: 'title',
+  testcase: 'title',
+  testcase_name: 'title',
+  testcase_title: 'title',
+  tc_name: 'title',
+  tc_title: 'title',
+  test_name: 'title',
+  test_title: 'title',
+  scenario: 'title',
+  test_scenario: 'title',
+  scenario_name: 'title',
+  summary: 'title',
+  case_name: 'title',
+  case_title: 'title',
+  test_case_description: 'title',
+  tc: 'title',
+  use_case: 'title',
+  requirement: 'title',
+  // Description
+  description: 'description',
+  desc: 'description',
+  details: 'description',
+  notes: 'description',
+  comments: 'description',
+  remark: 'description',
+  remarks: 'description',
+  // Module
+  module: 'module',
+  component: 'module',
+  area: 'module',
+  feature: 'module',
+  section: 'module',
+  page: 'module',
+  screen: 'module',
+  functionality: 'module',
+  // Priority
+  priority: 'priority',
+  prio: 'priority',
+  severity: 'priority',
+  // Status
+  status: 'status',
+  state: 'status',
+  result: 'status',
+  test_result: 'status',
+  outcome: 'status',
+  // Environment
+  environment: 'environment',
+  env: 'environment',
+  // Type
+  type: 'type',
+  test_type: 'type',
+  category: 'type',
+  // Tester
+  tester: 'tester',
+  tester_name: 'tester',
+  assigned_to: 'tester',
+  assignee: 'tester',
+  assigned: 'tester',
+  assigned_tester: 'tester',
+  qa: 'tester',
+  tested_by: 'tester',
+  owner: 'tester',
+  responsible: 'tester',
+  executor: 'tester',
+  executed_by: 'tester',
+  // Project
+  project: 'project',
+  project_name: 'project',
+  // Steps
+  steps: 'steps',
+  test_steps: 'steps',
+  steps_to_reproduce: 'steps',
+  procedure: 'steps',
+  actions: 'steps',
+  // Expected result
+  expected: 'expected_result',
+  expected_result: 'expected_result',
+  expected_outcome: 'expected_result',
+  expected_output: 'expected_result',
+  // Serial / ID columns (ignore, but don't block)
+  sr_no: '_skip',
+  s_no: '_skip',
+  serial: '_skip',
+  sl_no: '_skip',
+  id: '_skip',
+  test_case_id: '_skip',
+  tc_id: '_skip',
 };
 
 router.post('/import/excel', excelUpload.single('file'), async (req, res, next) => {
@@ -215,7 +300,9 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
+    const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
+      defval: '',
+    });
 
     if (!rawRows || rawRows.length === 0) {
       return res.status(400).json({ error: 'Excel file is empty or has no data rows' });
@@ -223,10 +310,28 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
 
     const rawHeaders = Object.keys(rawRows[0]);
     const headerMapping = {};
-    rawHeaders.forEach(h => { const n = normalizeHeader(h); if (HEADER_MAP[n]) headerMapping[h] = HEADER_MAP[n]; });
+    rawHeaders.forEach(h => {
+      const n = normalizeHeader(h);
+      if (HEADER_MAP[n] && HEADER_MAP[n] !== '_skip') headerMapping[h] = HEADER_MAP[n];
+    });
+
+    // If no title column found, try to use the first text column that looks like a title
+    if (!Object.values(headerMapping).includes('title')) {
+      const skipPatterns = /^(sr|s|sl|id|no|serial|index|tc_id|test_case_id|\d)/i;
+      const firstTextCol = rawHeaders.find(h => {
+        const norm = normalizeHeader(h);
+        return !skipPatterns.test(norm) && typeof rawRows[0][h] === 'string' && rawRows[0][h].length > 2;
+      });
+      if (firstTextCol) {
+        headerMapping[firstTextCol] = 'title';
+        logger.info(`Excel import: auto-detected "${firstTextCol}" as title column`);
+      }
+    }
 
     if (!Object.values(headerMapping).includes('title')) {
-      return res.status(400).json({ error: 'Could not find a "Title" column.', detectedHeaders: rawHeaders });
+      return res
+        .status(400)
+        .json({ error: 'Could not find a "Title" column.', detectedHeaders: rawHeaders });
     }
 
     const testers = await db('testers').select('id', 'name', 'email');
@@ -234,14 +339,31 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
     const validPriorities = ['Critical', 'High', 'Medium', 'Low'];
     const validStatuses = ['Pass', 'Fail', 'In Progress', 'Pending', 'Blocked'];
     const validEnvs = ['Production', 'Staging', 'QA', 'Development', 'UAT'];
-    const validTypes = ['Functional', 'Regression', 'Smoke', 'Integration', 'E2E', 'Performance', 'Security', 'Usability', 'API', 'UI'];
-    const created = [], skipped = [];
+    const validTypes = [
+      'Functional',
+      'Regression',
+      'Smoke',
+      'Integration',
+      'E2E',
+      'Performance',
+      'Security',
+      'Usability',
+      'API',
+      'UI',
+    ];
+    const created = [],
+      skipped = [];
 
     for (let i = 0; i < rawRows.length; i++) {
       const row = rawRows[i];
       const mapped = {};
-      Object.entries(headerMapping).forEach(([orig, field]) => { mapped[field] = row[orig]?.toString().trim() || ''; });
-      if (!mapped.title) { skipped.push({ row: i + 2, reason: 'Missing title' }); continue; }
+      Object.entries(headerMapping).forEach(([orig, field]) => {
+        mapped[field] = row[orig]?.toString().trim() || '';
+      });
+      if (!mapped.title) {
+        skipped.push({ row: i + 2, reason: 'Missing title' });
+        continue;
+      }
 
       let tester_id = mapped.tester ? matchTester(mapped.tester, testers) : null;
       let project_id = req.body.project_id || null;
@@ -271,38 +393,83 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
       }
 
       let environment = 'Staging';
-      if (mapped.environment) { const m = validEnvs.find(v => v.toLowerCase() === mapped.environment.toLowerCase()); if (m) environment = m; }
+      if (mapped.environment) {
+        const m = validEnvs.find(v => v.toLowerCase() === mapped.environment.toLowerCase());
+        if (m) environment = m;
+      }
       let type = 'Functional';
-      if (mapped.type) { const m = validTypes.find(v => v.toLowerCase() === mapped.type.toLowerCase()); if (m) type = m; }
+      if (mapped.type) {
+        const m = validTypes.find(v => v.toLowerCase() === mapped.type.toLowerCase());
+        if (m) type = m;
+      }
 
       let stepsJson = '[]';
       if (mapped.steps) {
-        const stepLines = mapped.steps.split(/\n|(?=\d+[.)]\s)/).filter(Boolean).map(s => s.replace(/^\d+[.)]\s*/, '').trim()).filter(Boolean);
+        const stepLines = mapped.steps
+          .split(/\n|(?=\d+[.)]\s)/)
+          .filter(Boolean)
+          .map(s => s.replace(/^\d+[.)]\s*/, '').trim())
+          .filter(Boolean);
         const stepsArr = stepLines.map((action, idx) => ({
-          action, expected: idx === stepLines.length - 1 && mapped.expected_result ? mapped.expected_result : '',
+          action,
+          expected:
+            idx === stepLines.length - 1 && mapped.expected_result ? mapped.expected_result : '',
         }));
         if (stepsArr.length > 0) stepsJson = JSON.stringify(stepsArr);
       }
 
       const id = uuidv4();
       await db('test_cases').insert({
-        id, title: mapped.title, project_id, module: mapped.module || null, priority, tester_id,
-        environment, type, description: mapped.description || null, status, steps: stepsJson, created_by: req.user.name,
+        id,
+        title: mapped.title,
+        project_id,
+        module: mapped.module || null,
+        priority,
+        tester_id,
+        environment,
+        type,
+        description: mapped.description || null,
+        status,
+        steps: stepsJson,
+        created_by: req.user.name,
       });
 
       created.push({
-        id, title: mapped.title, priority, status, module: mapped.module || null,
+        id,
+        title: mapped.title,
+        priority,
+        status,
+        module: mapped.module || null,
         tester: tester_id ? testers.find(t => t.id === tester_id)?.name : mapped.tester || null,
         testerMatched: !!tester_id,
       });
     }
 
     if (created.length > 0) {
-      try { await db('notifications').insert({ id: uuidv4(), title: `${created.length} test case(s) imported`, sub: `From ${req.file.originalname}`, type: 'info' }); } catch (e) { /* silent */ }
+      try {
+        await db('notifications').insert({
+          id: uuidv4(),
+          title: `${created.length} test case(s) imported`,
+          sub: `From ${req.file.originalname}`,
+          type: 'info',
+        });
+      } catch (e) {
+        /* silent */
+      }
     }
 
-    logger.info(`Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`);
-    res.status(201).json({ message: `${created.length} test case(s) imported successfully`, created: created.length, skipped: skipped.length, skippedDetails: skipped, testCases: created });
+    logger.info(
+      `Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`
+    );
+    res
+      .status(201)
+      .json({
+        message: `${created.length} test case(s) imported successfully`,
+        created: created.length,
+        skipped: skipped.length,
+        skippedDetails: skipped,
+        testCases: created,
+      });
   } catch (err) {
     logger.error('Excel import error:', err.message);
     next(err);
@@ -311,15 +478,51 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
 
 router.get('/import/template', (req, res) => {
   const templateData = [
-    { Title: 'Login with valid credentials', Description: 'Verify user can login with correct email and password', Module: 'Authentication', Priority: 'High', Status: 'Pending', Environment: 'Staging', Type: 'Functional', Tester: 'John Doe', Steps: '1. Go to login page\n2. Enter valid email\n3. Enter valid password\n4. Click Login', 'Expected Result': 'User is redirected to dashboard' },
-    { Title: 'Search functionality', Description: 'Verify search returns relevant results', Module: 'Search', Priority: 'Medium', Status: 'Pending', Environment: 'Staging', Type: 'Functional', Tester: '', Steps: '1. Click search bar\n2. Type keyword\n3. Press Enter', 'Expected Result': 'Relevant results are displayed' },
+    {
+      Title: 'Login with valid credentials',
+      Description: 'Verify user can login with correct email and password',
+      Module: 'Authentication',
+      Priority: 'High',
+      Status: 'Pending',
+      Environment: 'Staging',
+      Type: 'Functional',
+      Tester: 'John Doe',
+      Steps: '1. Go to login page\n2. Enter valid email\n3. Enter valid password\n4. Click Login',
+      'Expected Result': 'User is redirected to dashboard',
+    },
+    {
+      Title: 'Search functionality',
+      Description: 'Verify search returns relevant results',
+      Module: 'Search',
+      Priority: 'Medium',
+      Status: 'Pending',
+      Environment: 'Staging',
+      Type: 'Functional',
+      Tester: '',
+      Steps: '1. Click search bar\n2. Type keyword\n3. Press Enter',
+      'Expected Result': 'Relevant results are displayed',
+    },
   ];
   const ws = XLSX.utils.json_to_sheet(templateData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Test Cases');
-  ws['!cols'] = [{ wch: 35 }, { wch: 50 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 50 }, { wch: 35 }];
+  ws['!cols'] = [
+    { wch: 35 },
+    { wch: 50 },
+    { wch: 18 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 50 },
+    { wch: 35 },
+  ];
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
   res.setHeader('Content-Disposition', 'attachment; filename=testflow-import-template.xlsx');
   res.send(buffer);
 });
