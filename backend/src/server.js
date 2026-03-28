@@ -156,13 +156,6 @@ app.use('/api/projects', projectRouter);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 
-// temp verify endpoint
-app.get('/api/debug/testers-check', async (req, res) => {
-  const testers = await db('testers').select('name', 'email');
-  const users = await db('users').select('name', 'email', 'role');
-  res.json({ testers, users });
-});
-
 // ── 404 handler ──
 app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.url} not found` }));
 
@@ -176,26 +169,6 @@ async function start() {
   try {
     await db.raw('SELECT 1');
     logger.info(`✅ Database connected (${process.env.NODE_ENV})`);
-
-    // ── One-time: remove all 3 Ritika Pandey accounts ──
-    try {
-      const ritikaEmails = ['ritikapandey611@gmail.com', 'sakshipandeyji@gmail.com', 'ritika12@yopmail.com'];
-      await db.raw('SET FOREIGN_KEY_CHECKS = 0');
-      for (const email of ritikaEmails) {
-        const user = await db('users').where({ email }).first();
-        if (user) {
-          for (const tbl of ['refresh_tokens','two_fa_settings','audit_logs','failed_login_attempts','notifications','comments','password_reset_tokens']) {
-            await db(tbl).where('user_id', user.id).del().catch(() => {});
-          }
-          await db('test_cases').where('tester_id', user.id).update({ tester_id: null }).catch(() => {});
-          await db('users').where('id', user.id).del();
-          logger.info(`🗑️  Removed user: ${email}`);
-        }
-        const dt = await db('testers').where({ email }).del();
-        if (dt > 0) logger.info(`🗑️  Removed ${dt} tester entry for ${email}`);
-      }
-      await db.raw('SET FOREIGN_KEY_CHECKS = 1');
-    } catch (e) { logger.warn('Ritika cleanup:', e.message); }
 
     // ── Clean up testers table: remove duplicates and non-testers (Admin, Manager) ──
     try {
