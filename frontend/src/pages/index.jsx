@@ -1639,6 +1639,15 @@ export function TestCases() {
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
+  const allSelected = tcs.length > 0 && tcs.every(tc => selected.has(tc.id));
+  const someSelected = tcs.some(tc => selected.has(tc.id)) && !allSelected;
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(tcs.map(tc => tc.id)));
+    }
+  };
   const doBulkDel = async () => {
     try {
       await bulkDel.mutateAsync([...selected]);
@@ -1693,17 +1702,45 @@ export function TestCases() {
 
       {/* Action Bar */}
       <div className="topbar" style={{ height: 44, gap: 8 }}>
+        <div className="topbar-l" style={{ gap: 6, display: 'flex', alignItems: 'center' }}>
+          {tcs.length > 0 && (
+            <div
+              onClick={toggleSelectAll}
+              title={allSelected ? 'Deselect all' : 'Select all'}
+              style={{
+                width: 16, height: 16,
+                border: '1px solid var(--border2)',
+                borderRadius: 'var(--r4)',
+                cursor: 'pointer',
+                background: allSelected ? 'var(--accent)' : someSelected ? 'var(--accent-light, rgba(99,102,241,0.3))' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, color: '#fff', flexShrink: 0,
+              }}
+            >
+              {allSelected ? '✓' : someSelected ? '−' : ''}
+            </div>
+          )}
+          {selected.size > 0 && (
+            <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+              {selected.size} of {tcs.length} selected
+            </span>
+          )}
+        </div>
         <div className="topbar-r" style={{ gap: 6 }}>
           {selected.size > 0 && (
             <>
-              <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
-                {selected.size} selected
-              </span>
+              <button
+                className="btn btn-sm"
+                onClick={toggleSelectAll}
+                style={{ fontSize: 11 }}
+              >
+                {allSelected ? '☐ Deselect All' : '☑ Select All'}
+              </button>
               <button className="btn btn-sm btn-primary" onClick={() => setBulkModal(true)}>
                 ⚡ Bulk Update
               </button>
               <button className="btn btn-sm btn-danger" onClick={() => setConfirmBulk(true)}>
-                Delete
+                🗑 Delete ({selected.size})
               </button>
             </>
           )}
