@@ -156,6 +156,13 @@ app.use('/api/projects', projectRouter);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 
+// temp verify endpoint
+app.get('/api/debug/testers-check', async (req, res) => {
+  const testers = await db('testers').select('name', 'email');
+  const users = await db('users').select('name', 'email', 'role');
+  res.json({ testers, users });
+});
+
 // ── 404 handler ──
 app.use((req, res) => res.status(404).json({ error: `Route ${req.method} ${req.url} not found` }));
 
