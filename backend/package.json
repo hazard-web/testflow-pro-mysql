@@ -1,7 +1,7 @@
 {
-  "name": "testflow-backend",
+  "name": "qa-assist-backend",
   "version": "1.0.0",
-  "description": "TestFlow Pro — Express API Server (MySQL)",
+  "description": "QA Assist — Express API Server (MySQL)",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",

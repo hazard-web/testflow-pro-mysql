@@ -24,8 +24,8 @@ function generateRandomToken() {
 // ─────────────────────────────────────────
 function generate2FASecret(email) {
   const secret = speakeasy.generateSecret({
-    name: `TestFlow Pro (${email})`,
-    issuer: 'TestFlow Pro',
+    name: `QA Assist (${email})`,
+    issuer: 'QA Assist',
     length: 32,
   });
 
@@ -71,9 +71,9 @@ const transporter = nodemailer.createTransport({
 async function sendPasswordResetEmail(email, resetLink) {
   try {
     const mailOptions = {
-      from: process.env.MAIL_FROM || 'noreply@testflow.pro',
+      from: process.env.MAIL_FROM || 'noreply@qaassist.dev',
       to: email,
-      subject: 'Password Reset Request - TestFlow Pro',
+      subject: 'Password Reset Request - QA Assist',
       html: `
         <h2>Password Reset Request</h2>
         <p>Click the link below to reset your password. This link expires in 30 minutes.</p>
@@ -108,9 +108,9 @@ async function sendPasswordResetEmail(email, resetLink) {
 async function sendAccountLockedEmail(email, unlockTime) {
   try {
     const mailOptions = {
-      from: process.env.MAIL_FROM || 'noreply@testflow.pro',
+      from: process.env.MAIL_FROM || 'noreply@qaassist.dev',
       to: email,
-      subject: 'Account Locked - TestFlow Pro',
+      subject: 'Account Locked - QA Assist',
       html: `
         <h2>Account Temporarily Locked</h2>
         <p>Your account has been locked due to multiple failed login attempts.</p>
@@ -138,9 +138,9 @@ async function sendAccountLockedEmail(email, unlockTime) {
 async function send2FASetupEmail(email, qrCodeUrl) {
   try {
     const mailOptions = {
-      from: process.env.MAIL_FROM || 'noreply@testflow.pro',
+      from: process.env.MAIL_FROM || 'noreply@qaassist.dev',
       to: email,
-      subject: '2FA Setup - TestFlow Pro',
+      subject: '2FA Setup - QA Assist',
       html: `
         <h2>Two-Factor Authentication Setup</h2>
         <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc):</p>

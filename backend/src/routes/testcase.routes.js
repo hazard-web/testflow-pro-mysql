@@ -320,7 +320,9 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
       const skipPatterns = /^(sr|s|sl|id|no|serial|index|tc_id|test_case_id|\d)/i;
       const firstTextCol = rawHeaders.find(h => {
         const norm = normalizeHeader(h);
-        return !skipPatterns.test(norm) && typeof rawRows[0][h] === 'string' && rawRows[0][h].length > 2;
+        return (
+          !skipPatterns.test(norm) && typeof rawRows[0][h] === 'string' && rawRows[0][h].length > 2
+        );
       });
       if (firstTextCol) {
         headerMapping[firstTextCol] = 'title';
@@ -461,15 +463,13 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
     logger.info(
       `Excel import: ${created.length} created, ${skipped.length} skipped from ${req.file.originalname}`
     );
-    res
-      .status(201)
-      .json({
-        message: `${created.length} test case(s) imported successfully`,
-        created: created.length,
-        skipped: skipped.length,
-        skippedDetails: skipped,
-        testCases: created,
-      });
+    res.status(201).json({
+      message: `${created.length} test case(s) imported successfully`,
+      created: created.length,
+      skipped: skipped.length,
+      skippedDetails: skipped,
+      testCases: created,
+    });
   } catch (err) {
     logger.error('Excel import error:', err.message);
     next(err);
@@ -523,7 +523,7 @@ router.get('/import/template', (req, res) => {
     'Content-Type',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   );
-  res.setHeader('Content-Disposition', 'attachment; filename=testflow-import-template.xlsx');
+  res.setHeader('Content-Disposition', 'attachment; filename=qa-assist-import-template.xlsx');
   res.send(buffer);
 });
 
