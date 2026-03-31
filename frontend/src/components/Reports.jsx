@@ -161,7 +161,7 @@ export default function Reports({ projectId }) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `qa-assist-report-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         window.URL.revokeObjectURL(url);
       } else if (format === 'pdf') {
@@ -170,7 +170,7 @@ export default function Reports({ projectId }) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.pdf`;
+        link.download = `qa-assist-report-${new Date().toISOString().split('T')[0]}.pdf`;
         link.click();
         window.URL.revokeObjectURL(url);
       } else {
@@ -179,7 +179,7 @@ export default function Reports({ projectId }) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `testflow-report-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `qa-assist-report-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         window.URL.revokeObjectURL(url);
       }

@@ -135,10 +135,10 @@ export default function Layout() {
       {/* SIDEBAR */}
       <div className="sidebar">
         <div className="logo" onClick={() => navigate('/dashboard')}>
-          <div className="logo-icon">TF</div>
+          <div className="logo-icon">QA</div>
           <div>
-            <div className="logo-name">TestFlow</div>
-            <div className="logo-sub">Pro</div>
+            <div className="logo-name">QA Assist</div>
+            <div className="logo-sub"></div>
           </div>
         </div>
         <nav className="nav">

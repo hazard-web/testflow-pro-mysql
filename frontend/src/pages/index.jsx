@@ -181,7 +181,7 @@ export function LoginPage() {
               backgroundClip: 'text',
             }}
           >
-            TestFlow Pro
+            QA Assist
           </div>
           <div
             style={{
@@ -677,7 +677,7 @@ export function SignupPage() {
                 margin: 0,
               }}
             >
-              Join TestFlow Pro and start testing
+              Join QA Assist and start testing
             </p>
           </div>
 
@@ -1157,7 +1157,7 @@ export function SignupPage() {
               backgroundClip: 'text',
             }}
           >
-            TestFlow Pro
+            QA Assist
           </div>
           <div
             style={{
@@ -1708,13 +1708,22 @@ export function TestCases() {
               onClick={toggleSelectAll}
               title={allSelected ? 'Deselect all' : 'Select all'}
               style={{
-                width: 16, height: 16,
+                width: 16,
+                height: 16,
                 border: '1px solid var(--border2)',
                 borderRadius: 'var(--r4)',
                 cursor: 'pointer',
-                background: allSelected ? 'var(--accent)' : someSelected ? 'var(--accent-light, rgba(99,102,241,0.3))' : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, color: '#fff', flexShrink: 0,
+                background: allSelected
+                  ? 'var(--accent)'
+                  : someSelected
+                    ? 'var(--accent-light, rgba(99,102,241,0.3))'
+                    : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                color: '#fff',
+                flexShrink: 0,
               }}
             >
               {allSelected ? '✓' : someSelected ? '−' : ''}
@@ -1729,11 +1738,7 @@ export function TestCases() {
         <div className="topbar-r" style={{ gap: 6 }}>
           {selected.size > 0 && (
             <>
-              <button
-                className="btn btn-sm"
-                onClick={toggleSelectAll}
-                style={{ fontSize: 11 }}
-              >
+              <button className="btn btn-sm" onClick={toggleSelectAll} style={{ fontSize: 11 }}>
                 {allSelected ? '☐ Deselect All' : '☑ Select All'}
               </button>
               <button className="btn btn-sm btn-primary" onClick={() => setBulkModal(true)}>
@@ -2104,7 +2109,7 @@ function ExcelImportModal({ open, onClose, projects, testers }) {
       .then(blob => {
         const url = URL.createObjectURL(blob);
         link.href = url;
-        link.download = 'testflow-import-template.xlsx';
+        link.download = 'qa-assist-import-template.xlsx';
         link.click();
         URL.revokeObjectURL(url);
       })
@@ -5497,7 +5502,7 @@ export function Settings() {
           <div className="card">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
               {[
-                ['Version', 'TestFlow Pro v1.0'],
+                ['Version', 'QA Assist v1.0'],
                 ['Environment', import.meta.env.VITE_ENV || 'development'],
                 ['API URL', import.meta.env.VITE_API_URL],
                 ['User Role', user?.role],

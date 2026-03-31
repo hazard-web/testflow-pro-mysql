@@ -43,7 +43,7 @@ const uploadToCloud = async (buffer, originalName, mimeType) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder: 'testflow/attachments',
+        folder: 'qa-assist/attachments',
         resource_type: resourceType,
         use_filename: true,
         unique_filename: true,

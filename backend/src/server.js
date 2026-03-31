@@ -266,7 +266,7 @@ async function start() {
     }
 
     app.listen(PORT, () => {
-      logger.info(`🚀 TestFlow API running on http://localhost:${PORT}`);
+      logger.info(`🚀 QA Assist API running on http://localhost:${PORT}`);
       logger.info(`   Environment : ${process.env.NODE_ENV}`);
       logger.info(`   Client URL  : ${process.env.CLIENT_URL}`);
     });
