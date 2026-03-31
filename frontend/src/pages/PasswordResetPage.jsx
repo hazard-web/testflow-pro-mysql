@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import api from '../utils/api';
 
 export function PasswordResetPage() {
   const navigate = useNavigate();
@@ -31,17 +32,7 @@ export function PasswordResetPage() {
     setErr('');
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/password-reset/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send reset email');
-      }
+      await api.post('/auth/password-reset/request', { email: form.email });
 
       setSuccess(true);
       setForm({ email: '', password: '', confirmPassword: '' });
@@ -52,7 +43,7 @@ export function PasswordResetPage() {
         navigate('/login');
       }, 3000);
     } catch (ex) {
-      setErr(ex.message);
+      setErr(ex.response?.data?.error || ex.message);
     } finally {
       setLoading(false);
     }
@@ -74,22 +65,12 @@ export function PasswordResetPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/password-reset/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password: form.password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Password reset failed');
-      }
+      await api.post('/auth/password-reset/confirm', { token, password: form.password });
 
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (ex) {
-      setErr(ex.message);
+      setErr(ex.response?.data?.error || ex.message);
     } finally {
       setLoading(false);
     }
