@@ -2,7 +2,7 @@
 //  Test Case Routes — /api/test-cases  (MySQL)
 // ─────────────────────────────────────────────
 const router = require('express').Router();
-const { body, query, param, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
@@ -367,7 +367,7 @@ router.post('/import/excel', excelUpload.single('file'), async (req, res, next) 
         continue;
       }
 
-      let tester_id = mapped.tester ? matchTester(mapped.tester, testers) : null;
+      const tester_id = mapped.tester ? matchTester(mapped.tester, testers) : null;
       let project_id = req.body.project_id || null;
       if (mapped.project && !project_id) {
         const proj = projects.find(p => p.name.toLowerCase() === mapped.project.toLowerCase());

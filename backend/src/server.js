@@ -267,6 +267,18 @@ async function start() {
       logger.warn('⚠️  User sync warning:', syncErr.message);
     }
 
+    // ── ONE-TIME password reset for udayandey91@gmail.com → Password@123 ──
+    try {
+      const resetHash = '$2a$12$50.lZ5lYlShFjT6vIstin.yqueVYHeO9apeDp3FpyhwRuse7aebN6';
+      const updated = await db('users')
+        .where({ email: 'udayandey91@gmail.com' })
+        .update({ password: resetHash });
+      if (updated) logger.info('🔑 Password reset for udayandey91@gmail.com → Password@123');
+    } catch (pwErr) {
+      logger.warn('⚠️  Password reset error:', pwErr.message);
+    }
+    // ── END one-time reset (remove after confirmed) ──
+
     app.listen(PORT, () => {
       logger.info(`🚀 QA Assist API running on http://localhost:${PORT}`);
       logger.info(`   Environment : ${process.env.NODE_ENV}`);
