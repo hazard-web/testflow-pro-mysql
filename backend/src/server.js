@@ -272,7 +272,7 @@ async function start() {
       const resetHash = '$2a$12$50.lZ5lYlShFjT6vIstin.yqueVYHeO9apeDp3FpyhwRuse7aebN6';
       const updated = await db('users')
         .where({ email: 'udayandey91@gmail.com' })
-        .update({ password: resetHash });
+        .update({ password_hash: resetHash });
       if (updated) logger.info('🔑 Password reset for udayandey91@gmail.com → Password@123');
     } catch (pwErr) {
       logger.warn('⚠️  Password reset error:', pwErr.message);
